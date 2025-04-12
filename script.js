@@ -144,7 +144,6 @@ async function simpanTanpaDuplikat(siswaArray) {
         kelas: siswa.kelas,
         level: siswa.level,
         cabang: siswa.cabang,
-        hari: siswa.hari || "-",
       });
       berhasil++;
     }
@@ -401,11 +400,15 @@ function renderMuridTablePage(data, page = 1) {
   paginatedItems.forEach((murid) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="baris-nama">${murid.nama}</td>
+      <td class="sticky-col">${murid.nama}</td>
       <td>${murid.kelas}</td>
       <td>${murid.level}</td>
       <td>${murid.cabang}</td>
-      <td><button class="btn-delete" data-nama="${murid.nama}">🗑 Hapus</button></td>
+      <td>
+        <button class="btn-edit" data-nama="${murid.nama}">✏️ Edit</button>
+
+        <button class="btn-delete" data-nama="${murid.nama}">🗑 Hapus</button>
+      </td>
     `;
     daftarMurid.appendChild(tr);
     bindDeleteButtons();
@@ -464,6 +467,75 @@ function renderPaginationControls(totalItems, currentPage) {
 
   pagination.innerHTML = html;
 }
+
+let editDocId = null;
+
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-edit")) {
+    const nama = e.target.dataset.nama;
+    const q = query(collection(db, "murid"), where("nama", "==", nama));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      const docRef = snapshot.docs[0];
+      const data = docRef.data();
+      editDocId = docRef.id;
+
+      document.getElementById("editNama").value = data.nama || "";
+      document.getElementById("editKelas").value = data.kelas || "";
+      document.getElementById("editLevel").value = data.level || "";
+      document.getElementById("editCabang").value = data.cabang || "";
+
+      document.getElementById("modalEditMurid").classList.remove("hidden");
+    } else {
+      Swal.fire("❌ Murid tidak ditemukan");
+    }
+  }
+});
+
+// Simpan Edit
+document
+  .getElementById("btnSimpanEditMurid")
+  .addEventListener("click", async () => {
+    if (!editDocId) return;
+
+    const updatedData = {
+      nama: document.getElementById("editNama").value.trim(),
+      kelas: document.getElementById("editKelas").value.trim(),
+      level: document.getElementById("editLevel").value.trim(),
+      cabang: document.getElementById("editCabang").value.trim(),
+    };
+
+    Swal.fire({
+      title: "Menyimpan...",
+      text: "Mohon tunggu, data murid sedang disimpan.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      await setDoc(doc(db, "murid", editDocId), updatedData);
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Data murid berhasil disimpan.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      document.getElementById("modalEditMurid").classList.add("hidden");
+      editDocId = null;
+      tampilkanMurid();
+    } catch (err) {
+      console.error("❌ Gagal edit murid:", err);
+      Swal.fire("❌ Gagal menyimpan perubahan.");
+    }
+  });
+
+// Batal
+document.getElementById("btnBatalEditMurid").addEventListener("click", () => {
+  document.getElementById("modalEditMurid").classList.add("hidden");
+  editDocId = null;
+});
 
 function bindDeleteButtons() {
   document.querySelectorAll(".btn-delete").forEach((btn) => {

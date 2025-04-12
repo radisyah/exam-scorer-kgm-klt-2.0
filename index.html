@@ -9,7 +9,7 @@
   <body>
     <main class="wrapper">
       <!-- FORM TAMBAH MURID -->
-      <section class="container" style="display: none">
+      <section class="container">
         <h2>Tambah Data Murid</h2>
         <input type="text" id="nama" placeholder="Nama" />
         <input type="text" id="kelas" placeholder="Kelas" />
@@ -154,6 +154,41 @@
         />
         <div id="hasilNilai" class="hasil-cari"></div>
       </section>
+      <!-- Modal Edit Murid -->
+
+      <div id="modalEditMurid" class="modal hidden">
+        <div class="modal-content">
+          <h3>Edit Data Murid</h3>
+          <input
+            type="text"
+            class="modal-text"
+            id="editNama"
+            placeholder="Nama"
+          />
+          <input
+            type="text"
+            class="modal-text"
+            id="editKelas"
+            placeholder="Kelas"
+          />
+          <input
+            type="text"
+            class="modal-text"
+            id="editLevel"
+            placeholder="Level"
+          />
+          <input
+            type="text"
+            class="modal-text"
+            id="editCabang"
+            placeholder="Cabang"
+          />
+          <div class="form-buttons">
+            <button id="btnSimpanEditMurid" class="btn-simpan">Simpan</button>
+            <button id="btnBatalEditMurid" class="btn-cancel">Batal</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- JS -->
