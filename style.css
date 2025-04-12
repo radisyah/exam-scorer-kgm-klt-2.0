@@ -36,6 +36,10 @@ body {
   padding: 30px;
 }
 
+.nilai-container {
+  display: block; /* tampilkan default */
+}
+
 .container {
   max-width: 500px;
 }
