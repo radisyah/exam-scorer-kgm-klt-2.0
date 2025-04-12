@@ -401,7 +401,7 @@ function renderMuridTablePage(data, page = 1) {
   paginatedItems.forEach((murid) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="sticky-col">${murid.nama}</td>
+      <td class ="baris-nama">${murid.nama}</td>
       <td>${murid.kelas}</td>
       <td>${murid.level}</td>
       <td>${murid.cabang}</td>

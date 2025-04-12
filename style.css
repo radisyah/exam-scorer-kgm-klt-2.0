@@ -56,16 +56,6 @@ body {
   width: 100%;
 }
 
-/* === STICKY KOLOM NAMA === */
-th.sticky-col,
-td.sticky-col {
-  position: sticky;
-  left: 0;
-  background-color: #151531;
-  z-index: 1;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
-}
-
 .nilai-container {
   max-width: 100%;
   margin-top: 40px;
@@ -81,6 +71,10 @@ td.sticky-col {
   color: #90caf9;
   margin-bottom: 20px;
   text-align: center;
+}
+
+.baris-nama {
+  text-align: left;
 }
 
 /* === INPUTS === */
