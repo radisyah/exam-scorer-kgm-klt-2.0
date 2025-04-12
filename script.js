@@ -486,7 +486,16 @@ document.addEventListener("click", async (e) => {
       document.getElementById("editLevel").value = data.level || "";
       document.getElementById("editCabang").value = data.cabang || "";
 
-      document.getElementById("modalEditMurid").classList.remove("hidden");
+      const modal = document.getElementById("modalEditMurid");
+
+      // Reset animasi jika modal sedang terbuka
+      modal.classList.remove("show");
+      modal.classList.remove("hidden");
+
+      // Pakai delay singkat agar animasi bisa dipicu ulang
+      setTimeout(() => {
+        modal.classList.add("show");
+      }, 300);
     } else {
       Swal.fire("❌ Murid tidak ditemukan");
     }
@@ -522,7 +531,11 @@ document
         timer: 1500,
         showConfirmButton: false,
       });
-      document.getElementById("modalEditMurid").classList.add("hidden");
+      const modal = document.getElementById("modalEditMurid");
+      modal.classList.remove("show");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 300); // 300ms = durasi animasi di CSS
       editDocId = null;
       tampilkanMurid();
     } catch (err) {
@@ -533,7 +546,11 @@ document
 
 // Batal
 document.getElementById("btnBatalEditMurid").addEventListener("click", () => {
-  document.getElementById("modalEditMurid").classList.add("hidden");
+  const modal = document.getElementById("modalEditMurid");
+  modal.classList.remove("show");
+  setTimeout(() => {
+    modal.classList.add("hidden");
+  }, 300); // Sesuai dengan CSS transition
   editDocId = null;
 });
 

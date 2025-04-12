@@ -47,7 +47,6 @@ body {
 .table-container {
   max-width: 800px;
   margin-top: 40px;
-  /* overflow-x: auto; */
 }
 
 /* === WRAPPER AGAR TABLE SCROLL RESPONSIF === */
@@ -84,18 +83,6 @@ td.sticky-col {
 .container input[type="text"],
 .nilai-container input[type="text"],
 .nilai-container input[type="number"],
-.modal-text {
-  width: 100%;
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border: none;
-  border-radius: 8px;
-  background-color: #2a2a3b;
-  color: white;
-  font-size: 1rem;
-  transition: all 0.2s ease-in-out;
-}
-
 .modal-text {
   width: 100%;
   padding: 12px 15px;
@@ -218,6 +205,52 @@ tbody tr:hover {
   background-color: #33334d;
 }
 
+.h3-modal {
+  margin-bottom: 15px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: #1e1e2f;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  transform: translateY(-30px);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+
+.modal.show .modal-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.modal.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* === RESPONSIVE === */
 @media screen and (max-width: 600px) {
   .container,
@@ -238,44 +271,6 @@ tbody tr:hover {
   tr {
     font-size: 0.9rem;
   }
-}
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 100;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-.modal-content {
-  background-color: #1e1e2f;
-  padding: 30px;
-  border-radius: 12px;
-  max-width: 400px;
-  width: 90%;
-}
-
-.modal-content h3 {
-  color: #90caf9;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-/* === MISC === */
-.hasil-cari {
-  margin-bottom: 15px;
-  font-weight: bold;
-  color: #90caf9;
-}
-
-.hidden {
-  display: none;
 }
 
 #outputNilai {
@@ -339,11 +334,6 @@ select:focus {
   font-weight: bold;
 }
 
-.dots {
-  margin: 0 5px;
-  color: #ccc;
-}
-
 /* === TOMBOL HAPUS === */
 .btn-delete {
   padding: 6px 12px;
@@ -373,4 +363,30 @@ select:focus {
 
 .btn-edit:hover {
   background-color: #0c3b82;
+}
+
+.btn-simpan,
+.btn-cancel {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-simpan:hover,
+.btn-cancel:hover {
+  transform: scale(1.03);
+}
+
+/* === MISC === */
+.hasil-cari {
+  margin-bottom: 15px;
+  font-weight: bold;
+  color: #90caf9;
+}
+
+.hidden {
+  display: none;
+}
+
+.dots {
+  margin: 0 5px;
+  color: #ccc;
 }
