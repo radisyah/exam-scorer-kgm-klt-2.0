@@ -56,6 +56,10 @@ body {
   width: 100%;
 }
 
+.baris-nama {
+  text-align: left;
+}
+
 .nilai-container {
   max-width: 100%;
   margin-top: 40px;
@@ -71,10 +75,6 @@ body {
   color: #90caf9;
   margin-bottom: 20px;
   text-align: center;
-}
-
-.baris-nama {
-  text-align: left;
 }
 
 /* === INPUTS === */
