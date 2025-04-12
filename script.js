@@ -41,11 +41,8 @@ let siswaArray = [];
 const urlParams = new URLSearchParams(window.location.search);
 const akses = urlParams.get("akses");
 
-// validasi token atau kode
 if (akses === "xyz123") {
-  document.querySelector(".nilai-container").style.display = "block";
-} else {
-  document.querySelector(".nilai-container").style.display = "none";
+  document.querySelector("#siswa-container").style.display = "block";
 }
 
 document.getElementById("excelInput").addEventListener("change", (e) => {

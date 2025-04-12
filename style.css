@@ -36,8 +36,8 @@ body {
   padding: 30px;
 }
 
-.nilai-container {
-  display: block; /* tampilkan default */
+#siswa-container {
+  display: none; /* elemen langsung tersembunyi sejak awal */
 }
 
 .container {
