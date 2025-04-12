@@ -1,0 +1,320 @@
+/* === RESET STYLE === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #121212;
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* === CONTAINERS === */
+.container,
+.table-container,
+.nilai-container {
+  background-color: #1e1e2f;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  padding: 30px;
+}
+
+.container {
+  max-width: 500px;
+}
+
+.table-container {
+  max-width: 800px;
+  margin-top: 40px;
+  /* overflow-x: auto; */
+}
+
+/* === WRAPPER AGAR TABLE SCROLL RESPONSIF === */
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* === STICKY KOLOM NAMA === */
+th.sticky-col,
+td.sticky-col {
+  position: sticky;
+  left: 0;
+  background-color: #151531;
+  z-index: 1;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.nilai-container {
+  max-width: 100%;
+  margin-top: 40px;
+  color: #ffffff;
+  overflow-x: auto;
+}
+
+/* === TITLES === */
+.container h2,
+.table-container h2,
+.nilai-container h2,
+.nilai-container h3 {
+  color: #90caf9;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* === INPUTS === */
+.container input[type="text"],
+.nilai-container input[type="text"],
+.nilai-container input[type="number"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2a2a3b;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.container input[type="text"]::placeholder,
+.nilai-container input::placeholder {
+  color: #888;
+}
+
+.container input[type="text"]:focus,
+.nilai-container input:focus {
+  outline: 2px solid #64b5f6;
+  background-color: #33334d;
+}
+
+/* === BUTTONS === */
+.container button,
+.nilai-container button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#tambahMuridBtn,
+#uploadBtn {
+  background-color: #1976d2;
+}
+
+#tambahMuridBtn:hover {
+  background-color: #0d47a1;
+}
+#uploadBtn:hover {
+  background-color: #0d47a1;
+}
+
+/* === FORM BUTTON GROUP === */
+.form-buttons {
+  margin-top: 1rem;
+  padding: 10px;
+}
+
+.btn-simpan,
+.btn-cancel {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-simpan {
+  background-color: #4caf50;
+  color: white;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.btn-simpan:hover {
+  background-color: #45a049;
+}
+
+.btn-cancel {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #d32f2f;
+}
+
+/* === TABLE STYLE === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #ffffff;
+  min-width: 800px;
+  margin-top: 20px;
+}
+
+thead {
+  background-color: #2c2c3e;
+}
+
+thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: bold;
+  color: #90caf9;
+  border-bottom: 2px solid #444;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+  background-color: #2a2a3b;
+  text-align: center;
+  white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #252536;
+}
+
+tbody tr:hover {
+  background-color: #33334d;
+}
+
+/* === RESPONSIVE === */
+@media screen and (max-width: 600px) {
+  .container,
+  .table-container,
+  .nilai-container {
+    padding: 20px;
+  }
+
+  .container h2 {
+    font-size: 1.3rem;
+  }
+
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    font-size: 0.9rem;
+  }
+}
+
+/* === MISC === */
+.hasil-cari {
+  margin-bottom: 15px;
+  font-weight: bold;
+  color: #90caf9;
+}
+
+.hidden {
+  display: none;
+}
+
+#outputNilai {
+  margin-top: 20px;
+  padding: 12px;
+  background-color: #2a2a3b;
+  border-radius: 8px;
+  color: white;
+}
+
+.nilai-card {
+  background-color: #2a2a3b;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 15px;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.nilai-card h3 {
+  margin-bottom: 12px;
+  color: #90caf9;
+}
+
+.nilai-card p {
+  margin-bottom: 6px;
+}
+
+select {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2a2a3b;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+select:focus {
+  outline: 2px solid #64b5f6;
+  background-color: #33334d;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+.pagination button {
+  margin: 0 5px;
+  padding: 5px 10px;
+  border: none;
+  background-color: #1976d2;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pagination button.active {
+  background-color: #0d47a1;
+  font-weight: bold;
+}
+
+.dots {
+  margin: 0 5px;
+  color: #ccc;
+}
+
+/* === TOMBOL HAPUS === */
+.btn-delete {
+  padding: 6px 12px;
+  background-color: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.btn-delete:hover {
+  background-color: #b71c1c;
+}
