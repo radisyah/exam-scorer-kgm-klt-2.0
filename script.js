@@ -34,6 +34,7 @@ const hasilNilai = document.getElementById("hasilNilai");
 
 // ======================= GLOBAL VARIABLES ==========================
 let daftarMuridCache = [];
+let siswaArray = [];
 let nilaiCache = [];
 let muridDipilih = null;
 let editDocId = null;
@@ -252,6 +253,7 @@ inputCari.addEventListener(
   }, 300)
 );
 
+// Simpan nilai murid
 document
   .getElementById("simpanNilaiBtn")
   .addEventListener("click", async () => {
@@ -305,6 +307,10 @@ document
     try {
       const docRef = doc(db, "nilai", muridDipilih.nama.toLowerCase());
       await setDoc(docRef, nilai, { merge: true });
+
+      // Update nilaiCache secara langsung
+      nilaiCache.push({ id: docRef.id, ...nilai }); // Tambahkan nilai baru ke cache
+
       Swal.fire({
         icon: "success",
         title: "Nilai Disimpan",
@@ -314,6 +320,9 @@ document
       });
       resetFormNilai();
       sembunyikanFormNilai();
+
+      // Render ulang daftar nilai murid
+      await loadDataNilaiMurid(); // Memanggil fungsi untuk memuat data nilai murid
     } catch (err) {
       console.error("❌ Gagal simpan nilai:", err);
       Swal.fire({
@@ -344,12 +353,20 @@ cariNilaiInput.addEventListener(
     if (data) {
       hasilNilai.innerHTML = `
       <div class="nilai-card">
-        <h3>${data.nama} - ${data.cabang}, Kelas ${data.kelas}, Level ${data.level}</h3>
-        <p>📖 Reading: ${data.reading}</p>
-        <p>🎧 Listening: ${data.listening}</p>
-        <p>✍️ Writing: ${data.writing}</p>
-        <p>🗣️ Speaking: ${data.speaking}</p>
-        <p>🔢 Matematika: ${data.matematika}</p>
+        <h3>${data.nama} - ${data.cabang}, Kelas ${data.kelas}, Level ${
+        data.level
+      }</h3>
+        <p>📖 Reading: ${data.reading !== null ? data.reading : "menunggu"}</p>
+        <p>🎧 Listening: ${
+          data.listening !== null ? data.reading : "menunggu"
+        }</p>
+        <p>✍️ Writing: ${data.writing !== null ? data.reading : "menunggu"}</p>
+        <p>🗣️ Speaking: ${
+          data.speaking !== null ? data.reading : "menunggu"
+        }</p>
+        <p>🔢 Matematika: ${
+          data.matematika !== null ? data.reading : "menunggu"
+        }</p>
       </div>
     `;
     } else {
@@ -595,9 +612,18 @@ function bindDeleteButtons() {
   });
 }
 
+// Export nilai
 document
   .getElementById("btnExportNilai")
   .addEventListener("click", async () => {
+    if (nilaiCache.length === 0) {
+      return Swal.fire(
+        "Kosong",
+        "Belum ada data nilai untuk diekspor.",
+        "info"
+      );
+    }
+
     Swal.fire({
       title: "Mengekspor data...",
       text: "Mohon tunggu, sedang menyiapkan file Excel.",
@@ -606,14 +632,6 @@ document
     });
 
     try {
-      if (nilaiCache.length === 0) {
-        return Swal.fire(
-          "Kosong",
-          "Belum ada data nilai untuk diekspor.",
-          "info"
-        );
-      }
-
       const dataExport = nilaiCache.map((d) => ({
         Nama: d.nama || "",
         Kelas: d.kelas || "",
@@ -644,6 +662,7 @@ document
     }
   });
 
+// Render nilai murid
 function renderNilaiMuridPage(data, page = 1) {
   const tbody = document.getElementById("daftarNilaiMurid");
   tbody.innerHTML = "";
@@ -659,10 +678,13 @@ function renderNilaiMuridPage(data, page = 1) {
       <td>${item.kelas}</td>
       <td>${item.level}</td>
       <td>${item.cabang}</td>
-      <td>${item.reading ?? "-"}</td>
-      <td>${item.listening ?? "-"}</td>
-      <td>${item.writing ?? "-"}</td>
-      <td>${item.speaking ?? "-"}</td>
+      <td>${item.reading !== null ? item.reading : "menunggu"}</td>
+      <td>${item.listening !== null ? item.listening : "menunggu"}</td>
+      <td>${item.writing !== null ? item.writing : "menunggu"}</td>
+      <td>${item.speaking !== null ? item.speaking : "menunggu"}</td>
+      <td>${
+        item.matematika !== null ? item.matematika : "menunggu"
+      }</td> <!-- Tambahkan kolom untuk nilai matematika -->
       <td>
         <button class="btn-edit-nilai" data-id="${item.id}">✏️ Edit</button>
         <button class="btn-delete-nilai" data-id="${item.id}" data-nama="${
@@ -738,6 +760,7 @@ document.addEventListener("click", async (e) => {
     document.getElementById("editListening").value = data.listening ?? "";
     document.getElementById("editWriting").value = data.writing ?? "";
     document.getElementById("editSpeaking").value = data.speaking ?? "";
+    document.getElementById("editMatematika").value = data.matematika ?? "";
 
     Swal.close();
     const modal = document.getElementById("modalEditNilai");
@@ -746,6 +769,7 @@ document.addEventListener("click", async (e) => {
   }
 });
 
+// Simpan Edit Nilai
 document
   .getElementById("btnSimpanEditNilai")
   .addEventListener("click", async () => {
@@ -758,6 +782,8 @@ document
       writing: parseInt(document.getElementById("editWriting")?.value) || null,
       speaking:
         parseInt(document.getElementById("editSpeaking")?.value) || null,
+      matematika:
+        parseInt(document.getElementById("editMatematika")?.value) || null,
     };
 
     Swal.fire({
@@ -768,6 +794,12 @@ document
 
     try {
       await setDoc(doc(db, "nilai", editNilaiId), updated, { merge: true });
+
+      // Update nilaiCache secara langsung
+      const index = nilaiCache.findIndex((item) => item.id === editNilaiId);
+      if (index !== -1) {
+        nilaiCache[index] = { ...nilaiCache[index], ...updated }; // Update nilai yang ada
+      }
 
       Swal.fire({
         icon: "success",
@@ -782,7 +814,9 @@ document
       setTimeout(() => {
         document.getElementById("modalEditNilai").classList.add("hidden");
       }, 300);
-      await loadDataNilaiMurid();
+
+      // Render ulang daftar nilai murid
+      loadDataNilaiMurid(); // Memanggil fungsi untuk memuat data nilai murid
     } catch (error) {
       console.error("❌ Error saat menyimpan nilai:", error);
       Swal.fire("❌ Gagal", "Terjadi kesalahan saat menyimpan.", "error");
@@ -797,6 +831,7 @@ btnBatalEditNilai.addEventListener("click", () => {
   editNilaiId = null;
 });
 
+// Hapus Nilai
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-delete-nilai")) {
     const id = e.target.dataset.id;
@@ -805,7 +840,7 @@ document.addEventListener("click", async (e) => {
     const konfirmasi = await Swal.fire({
       icon: "warning",
       title: `Hapus Nilai?`,
-      text: `Yakin ingin menghapus nilai murid \"${nama}\"?`,
+      text: `Yakin ingin menghapus nilai murid "${nama}"?`,
       showCancelButton: true,
       confirmButtonText: "Ya, Hapus",
       cancelButtonText: "Batal",
@@ -821,8 +856,15 @@ document.addEventListener("click", async (e) => {
 
     try {
       await deleteDoc(doc(db, "nilai", id));
+
+      // Update nilaiCache secara langsung
+      // Update nilaiCache secara langsung
+      nilaiCache = nilaiCache.filter((item) => item.id !== id); // Hapus nilai dari cache
+
       Swal.fire("✅ Berhasil", "Data nilai berhasil dihapus.", "success");
-      await loadDataNilaiMurid();
+
+      // Render ulang daftar nilai murid
+      loadDataNilaiMurid(); // Memanggil fungsi untuk memuat data nilai murid
     } catch (err) {
       console.error(err);
       Swal.fire("❌ Gagal", "Gagal menghapus data.", "error");
@@ -866,16 +908,20 @@ function isiOpsiNilaiSelect() {
     95,
     100,
   ];
-  ["editReading", "editListening", "editWriting", "editSpeaking"].forEach(
-    (id) => {
-      const select = document.getElementById(id);
-      select.innerHTML = "";
-      nilaiOptions.forEach((val) => {
-        const option = document.createElement("option");
-        option.value = val;
-        option.textContent = val === "" ? id.replace("edit", "") : val;
-        select.appendChild(option);
-      });
-    }
-  );
+  [
+    "editReading",
+    "editListening",
+    "editWriting",
+    "editSpeaking",
+    "editMatematika",
+  ].forEach((id) => {
+    const select = document.getElementById(id);
+    select.innerHTML = "";
+    nilaiOptions.forEach((val) => {
+      const option = document.createElement("option");
+      option.value = val;
+      option.textContent = val === "" ? id.replace("edit", "") : val;
+      select.appendChild(option);
+    });
+  });
 }
