@@ -32,11 +32,16 @@ const judulFormNilai = document.getElementById("judulFormNilai");
 const cariNilaiInput = document.getElementById("cariNilaiNama");
 const hasilNilai = document.getElementById("hasilNilai");
 
+// ======================= GLOBAL VARIABLES ==========================
 let daftarMuridCache = [];
 let nilaiCache = [];
 let muridDipilih = null;
-
-let siswaArray = [];
+let editDocId = null;
+let editNilaiId = null;
+let currentPage = 1;
+let currentPageNilai = 1;
+const itemsPerPage = 5;
+const itemsPerPageNilai = 5;
 
 const urlParams = new URLSearchParams(window.location.search);
 const akses = urlParams.get("akses");
@@ -251,10 +256,6 @@ tambahBtn?.addEventListener("click", async (e) => {
   }
 });
 
-// ✅ Inisialisasi
-let currentPageNilai = 1;
-const itemsPerPageNilai = 5;
-
 // === DEBOUNCE UTILITY
 function debounce(func, delay = 300) {
   let timeout;
@@ -408,9 +409,6 @@ cariNilaiInput.addEventListener(
   }, 500)
 );
 
-let currentPage = 1;
-const itemsPerPage = 5;
-
 function renderMuridTablePage(data, page = 1) {
   const daftarMurid = document.getElementById("daftarMurid");
   daftarMurid.innerHTML = "";
@@ -489,8 +487,6 @@ function renderPaginationControls(totalItems, currentPage) {
 
   pagination.innerHTML = html;
 }
-
-let editDocId = null;
 
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-edit")) {
@@ -777,7 +773,6 @@ function renderPaginationNilai(totalItems, currentPage) {
   pagination.innerHTML = html;
 }
 
-let editNilaiId = null;
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-edit-nilai")) {
     const id = e.target.dataset.id;
