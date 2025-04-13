@@ -205,57 +205,6 @@ function loadDataNilaiMurid() {
   renderNilaiMuridPage(nilaiCache, currentPageNilai);
 }
 
-const tambahBtn = document.getElementById("tambahMuridBtn");
-tambahBtn?.addEventListener("click", async (e) => {
-  e.preventDefault();
-
-  const data = {
-    nama: document.getElementById("nama").value.trim(),
-    kelas: document.getElementById("kelas").value.trim(),
-    level: document.getElementById("level").value.trim(),
-    cabang: document.getElementById("cabang").value.trim(),
-  };
-
-  if (!data.nama) {
-    Swal.fire({
-      icon: "warning",
-      title: "Nama wajib diisi",
-      text: "Silakan isi nama murid terlebih dahulu.",
-    });
-    return;
-  }
-
-  Swal.fire({
-    title: "Menyimpan...",
-    text: "Mohon tunggu, data murid sedang disimpan.",
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
-  });
-
-  try {
-    await addDoc(collection(db, "murid"), data);
-    daftarMuridCache.push(data); // ⬅️ update cache langsung
-    Swal.fire({
-      icon: "success",
-      title: "Berhasil!",
-      text: "Data murid berhasil disimpan.",
-      timer: 1500,
-      showConfirmButton: false,
-    });
-    ["nama", "kelas", "level", "cabang"].forEach((id) => {
-      document.getElementById(id).value = "";
-    });
-    tampilkanMurid();
-  } catch (err) {
-    console.error("❌ Gagal menyimpan murid:", err);
-    Swal.fire({
-      icon: "error",
-      title: "Gagal!",
-      text: "Terjadi kesalahan saat menyimpan data murid.",
-    });
-  }
-});
-
 // === DEBOUNCE UTILITY
 function debounce(func, delay = 300) {
   let timeout;
