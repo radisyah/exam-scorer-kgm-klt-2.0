@@ -17,13 +17,17 @@
         <input type="text" id="cabang" placeholder="Cabang" />
         <button id="tambahMuridBtn">Simpan Murid</button>
       </section>
-      <section class="container" style="display: none">
+      <section class="container" id="uploadSiswaSection" style="display: none">
         <h2>Upload Data Siswa</h2>
         <input type="file" id="excelInput" accept=".xlsx" />
       </section>
 
       <!-- TABEL DAFTAR MURID -->
-      <section class="table-container" style="display: none">
+      <section
+        class="table-container"
+        id="daftarMuridSection"
+        style="display: none"
+      >
         <h2>Daftar Murid MEC KGM dan MEC KLT</h2>
 
         <div class="table-wrapper">
@@ -45,7 +49,11 @@
       </section>
 
       <!-- TABEL DAFTAR NILAI MURID -->
-      <section class="table-container" style="display: none">
+      <section
+        class="table-container"
+        id="daftarNilaiSection"
+        style="display: none"
+      >
         <h2>Daftar Nilai Murid MEC KGM dan MEC KLT</h2>
         <button id="btnExportNilai" class="btn-simpan">
           ⬇️ Export Nilai ke Excel
@@ -175,7 +183,7 @@
       </section>
 
       <!-- TABEL NILAI -->
-      <section class="nilai-container">
+      <section class="nilai-container" id="cariNilaiSection">
         <h2>Cari Nilai Ujian</h2>
         <input
           type="text"

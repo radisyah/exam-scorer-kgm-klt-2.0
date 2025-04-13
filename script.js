@@ -42,8 +42,14 @@ let siswaArray = [];
 const urlParams = new URLSearchParams(window.location.search);
 const akses = urlParams.get("akses");
 
-if (akses === "xyz123") {
+if (akses === "tchr123") {
   document.querySelector("#siswa-container").style.display = "block";
+}
+
+if (akses === "admn123") {
+  document.getElementById("uploadSiswaSection").style.display = "block";
+  document.getElementById("daftarMuridSection").style.display = "block";
+  document.getElementById("daftarNilaiSection").style.display = "block";
 }
 
 document.getElementById("excelInput").addEventListener("change", (e) => {
