@@ -23,7 +23,7 @@
       </section>
 
       <!-- TABEL DAFTAR MURID -->
-      <section class="table-container">
+      <section class="table-container" style="display: none">
         <h2>Daftar Murid MEC KGM dan MEC KLT</h2>
 
         <div class="table-wrapper">
@@ -42,6 +42,36 @@
         </div>
 
         <div class="pagination" id="paginationMurid"></div>
+      </section>
+
+      <!-- TABEL DAFTAR NILAI MURID -->
+      <section class="table-container" style="display: none">
+        <h2>Daftar Nilai Murid MEC KGM dan MEC KLT</h2>
+        <button id="btnExportNilai" class="btn-simpan">
+          ⬇️ Export Nilai ke Excel
+        </button>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th class="sticky-col">Nama</th>
+                <th>Kelas</th>
+                <th>Level</th>
+                <th>Cabang</th>
+                <th>Reading</th>
+                <th>Listening</th>
+                <th>Writing</th>
+                <th>Speaking</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+
+            <tbody id="daftarNilaiMurid"></tbody>
+          </table>
+        </div>
+
+        <div class="pagination" id="paginationNilaiMurid"></div>
       </section>
 
       <!-- FORM INPUT NILAI -->
@@ -189,10 +219,37 @@
           </div>
         </div>
       </div>
+      <div id="modalEditNilai" class="modal hidden">
+        <div class="modal-content">
+          <h3 class="h3-modal">Edit Nilai Murid</h3>
+
+          <!-- Hidden input untuk ID -->
+          <input type="hidden" id="editNilaiId" />
+          <!-- Select nilai -->
+          <select id="editReading">
+            <option value="">Reading</option>
+          </select>
+          <select id="editListening">
+            <option value="">Listening</option>
+          </select>
+          <select id="editWriting">
+            <option value="">Writing</option>
+          </select>
+          <select id="editSpeaking">
+            <option value="">Speaking</option>
+          </select>
+
+          <div class="form-buttons">
+            <button id="btnSimpanEditNilai" class="btn-simpan">Simpan</button>
+            <button id="btnBatalEditNilai" class="btn-cancel">Batal</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- JS -->
     <script type="module" src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   </body>

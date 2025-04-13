@@ -335,7 +335,8 @@ select:focus {
 }
 
 /* === TOMBOL HAPUS === */
-.btn-delete {
+.btn-delete,
+.btn-delete-nilai {
   padding: 6px 12px;
   background-color: #d32f2f;
   color: #fff;
@@ -346,9 +347,10 @@ select:focus {
   transition: background-color 0.3s ease;
 }
 
-.btn-edit {
+.btn-edit,
+.btn-edit-nilai {
   padding: 6px 12px;
-  background-color: #0d47a1;
+  background-color: #1976d2;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -361,7 +363,15 @@ select:focus {
   background-color: #b71c1c;
 }
 
+.btn-delete-nilai:hover {
+  background-color: #b71c1c;
+}
+
 .btn-edit:hover {
+  background-color: #0c3b82;
+}
+
+.btn-edit-nilai:hover {
   background-color: #0c3b82;
 }
 

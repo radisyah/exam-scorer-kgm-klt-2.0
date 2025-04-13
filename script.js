@@ -13,13 +13,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDY0AOViUoiGszsIxrnT54O5wTE70lwGmA",
-  authDomain: "aplikasi-input-nilai-ujian.firebaseapp.com",
-  projectId: "aplikasi-input-nilai-ujian",
-  storageBucket: "aplikasi-input-nilai-ujian.firebasestorage.app",
-  messagingSenderId: "193921895444",
-  appId: "1:193921895444:web:5104b5124792c097636b01",
-  measurementId: "G-793WCRN5WL",
+  apiKey: "AIzaSyBFi219yiToKp9D-7Ml6QeEWHqwHz3JgtE",
+  authDomain: "input-nilai-ujian-mec-kgm-klt.firebaseapp.com",
+  projectId: "input-nilai-ujian-mec-kgm-klt",
+  storageBucket: "input-nilai-ujian-mec-kgm-klt.firebasestorage.app",
+  messagingSenderId: "139888117338",
+  appId: "1:139888117338:web:b9a8af60e0d173c6e07a63",
+  measurementId: "G-YGZKCRFR5W",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -359,19 +359,20 @@ document.getElementById("batalNilaiBtn").addEventListener("click", () => {
   sembunyikanFormNilai();
 });
 
-cariNilaiInput.addEventListener("input", async () => {
-  const keyword = cariNilaiInput.value.toLowerCase();
-  hasilNilai.innerHTML = "";
+cariNilaiInput.addEventListener(
+  "input",
+  debounce(() => {
+    const keyword = cariNilaiInput.value.toLowerCase();
+    hasilNilai.innerHTML = "";
 
-  if (!keyword) return;
+    if (!keyword) return;
 
-  const snapshot = await getDocs(collection(db, "nilai"));
-  const data = snapshot.docs
-    .map((doc) => doc.data())
-    .find((d) => d.nama.toLowerCase().includes(keyword));
+    const data = nilaiCache.find(
+      (d) => d.nama.toLowerCase().includes(keyword) // Pastikan tanda kurung di sini lengkap.
+    );
 
-  if (data) {
-    hasilNilai.innerHTML = `
+    if (data) {
+      hasilNilai.innerHTML = `
       <div class="nilai-card">
         <h3>${data.nama} - ${data.cabang}, Kelas ${data.kelas}, Level ${data.level}</h3>
         <p>📖 Reading: ${data.reading}</p>
@@ -381,10 +382,11 @@ cariNilaiInput.addEventListener("input", async () => {
         <p>🔢 Matematika: ${data.matematika}</p>
       </div>
     `;
-  } else {
-    hasilNilai.textContent = "❌ Nilai tidak ditemukan.";
-  }
-});
+    } else {
+      hasilNilai.textContent = "❌ Nilai tidak ditemukan.";
+    }
+  }, 500)
+);
 
 let currentPage = 1;
 const itemsPerPage = 5;
@@ -473,8 +475,19 @@ let editDocId = null;
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-edit")) {
     const nama = e.target.dataset.nama;
+
+    // Menampilkan modal "Memuat data..."
+    Swal.fire({
+      title: "Memuat data...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
     const q = query(collection(db, "murid"), where("nama", "==", nama));
     const snapshot = await getDocs(q);
+
+    // Setelah data berhasil dimuat, tutup modal loading
+    Swal.close();
 
     if (!snapshot.empty) {
       const docRef = snapshot.docs[0];
@@ -495,7 +508,7 @@ document.addEventListener("click", async (e) => {
       // Pakai delay singkat agar animasi bisa dipicu ulang
       setTimeout(() => {
         modal.classList.add("show");
-      }, 300);
+      }, 100);
     } else {
       Swal.fire("❌ Murid tidak ditemukan");
     }
@@ -605,6 +618,257 @@ function bindDeleteButtons() {
   });
 }
 
+document
+  .getElementById("btnExportNilai")
+  .addEventListener("click", async () => {
+    Swal.fire({
+      title: "Mengekspor data...",
+      text: "Mohon tunggu, sedang menyiapkan file Excel.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      const snapshot = await getDocs(collection(db, "nilai"));
+
+      if (snapshot.empty) {
+        Swal.fire("Kosong", "Belum ada data nilai untuk diekspor.", "info");
+        return;
+      }
+
+      const dataExport = [];
+      snapshot.forEach((doc) => {
+        const d = doc.data();
+        dataExport.push({
+          Nama: d.nama || "",
+          Kelas: d.kelas || "",
+          Level: d.level || "",
+          Cabang: d.cabang || "",
+          Reading: d.reading ?? "",
+          Listening: d.listening ?? "",
+          Writing: d.writing ?? "",
+          Speaking: d.speaking ?? "",
+        });
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Nilai Siswa");
+
+      XLSX.writeFile(workbook, "data_nilai_siswa.xlsx");
+
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "File Excel telah disimpan.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error("Export error:", err);
+      Swal.fire("Gagal", "Terjadi kesalahan saat ekspor data.", "error");
+    }
+  });
+
+// ✅ Inisialisasi
+let nilaiCache = [];
+let currentPageNilai = 1;
+const itemsPerPageNilai = 5;
+
+// ✅ Fungsi Ambil Semua Data Nilai Sekali Saja
+async function loadDataNilaiMurid() {
+  const snapshot = await getDocs(collection(db, "nilai"));
+  nilaiCache = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  renderNilaiMuridPage(nilaiCache, currentPageNilai);
+}
+
+// ✅ Debounce untuk pencarian
+function debounce(func, delay = 300) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+function renderNilaiMuridPage(data, page = 1) {
+  const tbody = document.getElementById("daftarNilaiMurid");
+  tbody.innerHTML = "";
+
+  const start = (page - 1) * itemsPerPageNilai;
+  const end = start + itemsPerPageNilai;
+  const paginatedItems = data.slice(start, end);
+
+  paginatedItems.forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="sticky-col">${item.nama}</td>
+      <td>${item.kelas}</td>
+      <td>${item.level}</td>
+      <td>${item.cabang}</td>
+      <td>${item.reading ?? "-"}</td>
+      <td>${item.listening ?? "-"}</td>
+      <td>${item.writing ?? "-"}</td>
+      <td>${item.speaking ?? "-"}</td>
+      <td>
+        <button class="btn-edit-nilai" data-id="${item.id}">✏️ Edit</button>
+        <button class="btn-delete-nilai" data-id="${item.id}" data-nama="${
+      item.nama
+    }">🗑 Hapus</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  renderPaginationNilai(data.length, page);
+}
+
+function renderPaginationNilai(totalItems, currentPage) {
+  const pagination = document.getElementById("paginationNilaiMurid");
+  let html = "";
+  const totalPages = Math.ceil(totalItems / itemsPerPageNilai);
+  const maxButtons = 5;
+
+  let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+  let endPage = startPage + maxButtons - 1;
+  if (endPage > totalPages) {
+    endPage = totalPages;
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  if (currentPage > 1) {
+    html += `<button onclick="changePageNilai(${
+      currentPage - 1
+    })">&laquo; Prev</button>`;
+  }
+
+  if (startPage > 2) {
+    html += `<button onclick="changePageNilai(1)">1</button><span class="dots">...</span>`;
+  } else if (startPage === 2) {
+    html += `<button onclick="changePageNilai(1)">1</button>`;
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    html += `<button class="${
+      i === currentPage ? "active" : ""
+    }" onclick="changePageNilai(${i})">${i}</button>`;
+  }
+
+  if (endPage < totalPages - 1) {
+    html += `<span class="dots">...</span><button onclick="changePageNilai(${totalPages})">${totalPages}</button>`;
+  } else if (endPage === totalPages - 1) {
+    html += `<button onclick="changePageNilai(${totalPages})">${totalPages}</button>`;
+  }
+
+  if (currentPage < totalPages) {
+    html += `<button onclick="changePageNilai(${
+      currentPage + 1
+    })">Next &raquo;</button>`;
+  }
+
+  pagination.innerHTML = html;
+}
+
+let editNilaiId = null;
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-edit-nilai")) {
+    const id = e.target.dataset.id;
+
+    const data = nilaiCache.find((item) => item.id === id);
+
+    if (!data) {
+      Swal.close();
+      return Swal.fire("❌ Data tidak ditemukan.");
+    }
+
+    // ✅ Isi form modal
+    document.getElementById("editNilaiId").value = id;
+    document.getElementById("editReading").value = data.reading ?? "";
+    document.getElementById("editListening").value = data.listening ?? "";
+    document.getElementById("editWriting").value = data.writing ?? "";
+    document.getElementById("editSpeaking").value = data.speaking ?? "";
+
+    // ✅ Tutup loading dan tampilkan modal
+    Swal.close();
+    const modal = document.getElementById("modalEditNilai");
+    modal.classList.remove("hidden");
+    requestAnimationFrame(() => modal.classList.add("show"));
+  }
+});
+
+btnSimpanEditNilai.addEventListener("click", async () => {
+  if (!editNilaiId) return;
+
+  Swal.fire({
+    title: "Memuat data...",
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+  });
+
+  const updated = {
+    reading: parseInt(document.getElementById("editReading").value) || null,
+    listening: parseInt(document.getElementById("editListening").value) || null,
+    writing: parseInt(document.getElementById("editWriting").value) || null,
+    speaking: parseInt(document.getElementById("editSpeaking").value) || null,
+  };
+
+  await setDoc(doc(db, "nilai", editNilaiId), updated, { merge: true });
+  Swal.fire("✅ Berhasil", "Data nilai berhasil diperbarui", "success");
+  editNilaiId = null;
+
+  const modal = document.getElementById("modalEditNilai");
+  modal.classList.remove("show");
+  setTimeout(() => modal.classList.add("hidden"), 300);
+  await loadDataNilaiMurid();
+});
+
+// ✅ Batal
+btnBatalEditNilai.addEventListener("click", () => {
+  const modal = document.getElementById("modalEditNilai");
+  modal.classList.remove("show");
+  setTimeout(() => modal.classList.add("hidden"), 300);
+  editNilaiId = null;
+});
+
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-delete-nilai")) {
+    const id = e.target.dataset.id;
+    const nama = e.target.dataset.nama;
+
+    const konfirmasi = await Swal.fire({
+      icon: "warning",
+      title: `Hapus Nilai?`,
+      text: `Yakin ingin menghapus nilai murid \"${nama}\"?`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (!konfirmasi.isConfirmed) return;
+
+    Swal.fire({
+      title: "Menghapus data...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      await deleteDoc(doc(db, "nilai", id));
+      Swal.fire("✅ Berhasil", "Data nilai berhasil dihapus.", "success");
+      await loadDataNilaiMurid();
+    } catch (err) {
+      console.error(err);
+      Swal.fire("❌ Gagal", "Gagal menghapus data.", "error");
+    }
+  }
+});
+
+// ✅ Pindah Halaman
+window.changePageNilai = function (page) {
+  currentPageNilai = page;
+  renderNilaiMuridPage(nilaiCache, currentPageNilai);
+};
+
 window.changePage = function (page) {
   currentPage = page;
   renderMuridTablePage(daftarMuridCache, currentPage);
@@ -613,4 +877,38 @@ window.changePage = function (page) {
 window.addEventListener("DOMContentLoaded", () => {
   tampilkanMurid();
   muatDataMurid();
+  isiOpsiNilaiSelect();
+  loadDataNilaiMurid();
 });
+
+function isiOpsiNilaiSelect() {
+  const nilaiOptions = [
+    "",
+    0,
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70,
+    75,
+    80,
+    85,
+    90,
+    95,
+    100,
+  ];
+  ["editReading", "editListening", "editWriting", "editSpeaking"].forEach(
+    (id) => {
+      const select = document.getElementById(id);
+      select.innerHTML = "";
+      nilaiOptions.forEach((val) => {
+        const option = document.createElement("option");
+        option.value = val;
+        option.textContent = val === "" ? id.replace("edit", "") : val;
+        select.appendChild(option);
+      });
+    }
+  );
+}
