@@ -34,6 +34,7 @@ const cariNilaiInput = document.getElementById("cariNilaiNama");
 const hasilNilai = document.getElementById("hasilNilai");
 
 let daftarMuridCache = [];
+let nilaiCache = [];
 let muridDipilih = null;
 
 let siswaArray = [];
@@ -168,11 +169,19 @@ async function simpanTanpaDuplikat(siswaArray) {
   document.getElementById("excelInput").value = "";
 }
 
+// === FETCH CACHE DATA SEKALI
+async function loadCaches() {
+  const [muridSnapshot, nilaiSnapshot] = await Promise.all([
+    getDocs(collection(db, "murid")),
+    getDocs(collection(db, "nilai")),
+  ]);
+  daftarMuridCache = muridSnapshot.docs.map((doc) => doc.data());
+  nilaiCache = nilaiSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}
+
 function resetFormNilai() {
   ["reading", "listening", "writing", "speaking", "matematika"].forEach(
-    (id) => {
-      document.getElementById(id).value = "";
-    }
+    (id) => (document.getElementById(id).value = "")
   );
 }
 
@@ -187,11 +196,6 @@ async function tampilkanMurid() {
   const snapshot = await getDocs(collection(db, "murid"));
   daftarMuridCache = snapshot.docs.map((doc) => doc.data());
   renderMuridTablePage(daftarMuridCache, currentPage);
-}
-
-async function muatDataMurid() {
-  const snapshot = await getDocs(collection(db, "murid"));
-  daftarMuridCache = snapshot.docs.map((doc) => doc.data());
 }
 
 document
@@ -235,7 +239,6 @@ document
         document.getElementById(id).value = "";
       });
       tampilkanMurid();
-      muatDataMurid();
     } catch (err) {
       console.error("❌ Gagal menyimpan murid:", err);
       Swal.fire({
@@ -246,41 +249,63 @@ document
     }
   });
 
-inputCari.addEventListener("input", async () => {
-  const keyword = inputCari.value.toLowerCase();
-  if (!keyword) {
-    sembunyikanFormNilai();
-    return;
-  }
+// ✅ Inisialisasi
+let currentPageNilai = 1;
+const itemsPerPageNilai = 5;
 
-  const hasil = daftarMuridCache.find((murid) =>
-    murid.nama.toLowerCase().includes(keyword)
-  );
+// ✅ Fungsi Ambil Semua Data Nilai Sekali Saja
+async function loadDataNilaiMurid() {
+  const snapshot = await getDocs(collection(db, "nilai"));
+  nilaiCache = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  renderNilaiMuridPage(nilaiCache, currentPageNilai);
+}
 
-  if (hasil) {
-    muridDipilih = hasil;
-    hasilCari.textContent = `Ditemukan: ${hasil.nama} (Kelas ${hasil.kelas}, Level ${hasil.level}, Cabang ${hasil.cabang})`;
-    judulFormNilai.textContent = `Input / Edit nilai untuk ${hasil.nama}`;
+// === DEBOUNCE UTILITY
+function debounce(func, delay = 300) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
 
-    formNilai.classList.remove("hidden");
+// === PENCARIAN NILAI BERDASARKAN CACHE
+inputCari.addEventListener(
+  "input",
+  debounce(() => {
+    const keyword = inputCari.value.toLowerCase();
+    if (!keyword) return sembunyikanFormNilai();
 
-    const docRef = doc(db, "nilai", hasil.nama.toLowerCase());
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      document.getElementById("reading").value = data.reading ?? "";
-      document.getElementById("listening").value = data.listening ?? "";
-      document.getElementById("writing").value = data.writing ?? "";
-      document.getElementById("speaking").value = data.speaking ?? "";
-      document.getElementById("matematika").value = data.matematika ?? "";
+    const hasil = daftarMuridCache.find((m) =>
+      m.nama.toLowerCase().includes(keyword)
+    );
+
+    if (hasil) {
+      muridDipilih = hasil;
+      hasilCari.textContent = `Ditemukan: ${hasil.nama} (Kelas ${hasil.kelas}, Level ${hasil.level}, Cabang ${hasil.cabang})`;
+      judulFormNilai.textContent = `Input / Edit nilai untuk ${hasil.nama}`;
+
+      const data = nilaiCache.find(
+        (n) => n.nama.toLowerCase() === hasil.nama.toLowerCase()
+      );
+
+      if (data) {
+        document.getElementById("reading").value = data.reading ?? "";
+        document.getElementById("listening").value = data.listening ?? "";
+        document.getElementById("writing").value = data.writing ?? "";
+        document.getElementById("speaking").value = data.speaking ?? "";
+        document.getElementById("matematika").value = data.matematika ?? "";
+      } else {
+        resetFormNilai();
+      }
+
+      formNilai.classList.remove("hidden");
     } else {
-      resetFormNilai();
+      hasilCari.textContent = "❌ Murid tidak ditemukan.";
+      sembunyikanFormNilai();
     }
-  } else {
-    hasilCari.textContent = "❌ Murid tidak ditemukan.";
-    sembunyikanFormNilai();
-  }
-});
+  }, 300)
+);
 
 document
   .getElementById("simpanNilaiBtn")
@@ -670,27 +695,6 @@ document
     }
   });
 
-// ✅ Inisialisasi
-let nilaiCache = [];
-let currentPageNilai = 1;
-const itemsPerPageNilai = 5;
-
-// ✅ Fungsi Ambil Semua Data Nilai Sekali Saja
-async function loadDataNilaiMurid() {
-  const snapshot = await getDocs(collection(db, "nilai"));
-  nilaiCache = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  renderNilaiMuridPage(nilaiCache, currentPageNilai);
-}
-
-// ✅ Debounce untuk pencarian
-function debounce(func, delay = 300) {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), delay);
-  };
-}
-
 function renderNilaiMuridPage(data, page = 1) {
   const tbody = document.getElementById("daftarNilaiMurid");
   tbody.innerHTML = "";
@@ -874,11 +878,16 @@ window.changePage = function (page) {
   renderMuridTablePage(daftarMuridCache, currentPage);
 };
 
-window.addEventListener("DOMContentLoaded", () => {
-  tampilkanMurid();
-  muatDataMurid();
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadCaches(); // isi cache murid & nilai
+  tampilkanMurid(); // render data tabel
   isiOpsiNilaiSelect();
-  loadDataNilaiMurid();
+  loadDataNilaiMurid(); // tampilkan nilai di daftar
+});
+
+// === INISIALISASI SAAT HALAMAN DIMUAT
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadCaches();
 });
 
 function isiOpsiNilaiSelect() {
