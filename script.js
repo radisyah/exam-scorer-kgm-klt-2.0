@@ -52,6 +52,8 @@ if (akses === "tchr123") {
 }
 
 if (akses === "admn123") {
+  document.querySelector("#siswa-container").style.display = "block";
+
   document.getElementById("uploadSiswaSection").style.display = "block";
   document.getElementById("daftarMuridSection").style.display = "block";
   document.getElementById("daftarNilaiSection").style.display = "block";
