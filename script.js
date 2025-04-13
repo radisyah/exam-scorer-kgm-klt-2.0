@@ -3,7 +3,6 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc,
   getDocs,
   addDoc,
   deleteDoc,
@@ -198,9 +197,7 @@ function sembunyikanFormNilai() {
   muridDipilih = null;
 }
 
-async function tampilkanMurid() {
-  const snapshot = await getDocs(collection(db, "murid"));
-  daftarMuridCache = snapshot.docs.map((doc) => doc.data());
+function tampilkanMurid() {
   renderMuridTablePage(daftarMuridCache, currentPage);
 }
 
