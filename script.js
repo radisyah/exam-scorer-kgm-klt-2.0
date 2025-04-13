@@ -116,12 +116,24 @@ document.getElementById("excelInput").addEventListener("change", (e) => {
   reader.readAsArrayBuffer(file);
 });
 
+// === FETCH CACHE DATA SEKALI
+async function loadCaches() {
+  const [muridSnapshot, nilaiSnapshot] = await Promise.all([
+    getDocs(collection(db, "murid")),
+    getDocs(collection(db, "nilai")),
+  ]);
+  daftarMuridCache = muridSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+  nilaiCache = nilaiSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}
+
 async function simpanTanpaDuplikat(siswaArray) {
   const total = siswaArray.length;
   let berhasil = 0;
   let duplikat = [];
 
-  // Tampilkan sweetalert dengan progress
   Swal.fire({
     title: "Menyimpan data...",
     html: `
@@ -137,24 +149,16 @@ async function simpanTanpaDuplikat(siswaArray) {
 
   for (let i = 0; i < total; i++) {
     const siswa = siswaArray[i];
+    const isDuplicate = daftarMuridCache.some((m) => m.nama === siswa.nama);
 
-    // Cek duplikat berdasarkan nama
-    const q = query(collection(db, "murid"), where("nama", "==", siswa.nama));
-    const existing = await getDocs(q);
-
-    if (!existing.empty) {
+    if (isDuplicate) {
       duplikat.push(siswa.nama);
     } else {
-      await addDoc(collection(db, "murid"), {
-        nama: siswa.nama,
-        kelas: siswa.kelas,
-        level: siswa.level,
-        cabang: siswa.cabang,
-      });
+      const docRef = await addDoc(collection(db, "murid"), siswa);
+      daftarMuridCache.push({ id: docRef.id, ...siswa });
       berhasil++;
     }
 
-    // Update progress bar
     const percent = Math.floor(((i + 1) / total) * 100);
     document.getElementById("progressBar").style.width = `${percent}%`;
     document.getElementById("progressText").textContent = `${
@@ -162,7 +166,6 @@ async function simpanTanpaDuplikat(siswaArray) {
     } / ${total} diproses`;
   }
 
-  // Final feedback
   Swal.fire({
     icon: duplikat.length ? "warning" : "success",
     title: "Selesai",
@@ -172,16 +175,6 @@ async function simpanTanpaDuplikat(siswaArray) {
   });
 
   document.getElementById("excelInput").value = "";
-}
-
-// === FETCH CACHE DATA SEKALI
-async function loadCaches() {
-  const [muridSnapshot, nilaiSnapshot] = await Promise.all([
-    getDocs(collection(db, "murid")),
-    getDocs(collection(db, "nilai")),
-  ]);
-  daftarMuridCache = muridSnapshot.docs.map((doc) => doc.data());
-  nilaiCache = nilaiSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
 function resetFormNilai() {
@@ -197,71 +190,70 @@ function sembunyikanFormNilai() {
   muridDipilih = null;
 }
 
+// ======================= TAMPILKAN MURID (PAKAI CACHE) ==========================
 function tampilkanMurid() {
   renderMuridTablePage(daftarMuridCache, currentPage);
 }
 
-document
-  .getElementById("tambahMuridBtn")
-  .addEventListener("click", async (e) => {
-    e.preventDefault();
+// ======================= LOAD DATA NILAI (DARI CACHE) ==========================
+function loadDataNilaiMurid() {
+  renderNilaiMuridPage(nilaiCache, currentPageNilai);
+}
 
-    const data = {
-      nama: document.getElementById("nama").value.trim(),
-      kelas: document.getElementById("kelas").value.trim(),
-      level: document.getElementById("level").value.trim(),
-      cabang: document.getElementById("cabang").value.trim(),
-    };
+const tambahBtn = document.getElementById("tambahMuridBtn");
+tambahBtn?.addEventListener("click", async (e) => {
+  e.preventDefault();
 
-    if (!data.nama) {
-      Swal.fire({
-        icon: "warning",
-        title: "Nama wajib diisi",
-        text: "Silakan isi nama murid terlebih dahulu.",
-      });
-      return;
-    }
+  const data = {
+    nama: document.getElementById("nama").value.trim(),
+    kelas: document.getElementById("kelas").value.trim(),
+    level: document.getElementById("level").value.trim(),
+    cabang: document.getElementById("cabang").value.trim(),
+  };
 
+  if (!data.nama) {
     Swal.fire({
-      title: "Menyimpan...",
-      text: "Mohon tunggu, data murid sedang disimpan.",
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
+      icon: "warning",
+      title: "Nama wajib diisi",
+      text: "Silakan isi nama murid terlebih dahulu.",
     });
+    return;
+  }
 
-    try {
-      await addDoc(collection(db, "murid"), data);
-      Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: "Data murid berhasil disimpan.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      ["nama", "kelas", "level", "cabang"].forEach((id) => {
-        document.getElementById(id).value = "";
-      });
-      tampilkanMurid();
-    } catch (err) {
-      console.error("❌ Gagal menyimpan murid:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal!",
-        text: "Terjadi kesalahan saat menyimpan data murid.",
-      });
-    }
+  Swal.fire({
+    title: "Menyimpan...",
+    text: "Mohon tunggu, data murid sedang disimpan.",
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
   });
+
+  try {
+    await addDoc(collection(db, "murid"), data);
+    daftarMuridCache.push(data); // ⬅️ update cache langsung
+    Swal.fire({
+      icon: "success",
+      title: "Berhasil!",
+      text: "Data murid berhasil disimpan.",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+    ["nama", "kelas", "level", "cabang"].forEach((id) => {
+      document.getElementById(id).value = "";
+    });
+    tampilkanMurid();
+  } catch (err) {
+    console.error("❌ Gagal menyimpan murid:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Gagal!",
+      text: "Terjadi kesalahan saat menyimpan data murid.",
+    });
+  }
+});
 
 // ✅ Inisialisasi
 let currentPageNilai = 1;
 const itemsPerPageNilai = 5;
-
-// ✅ Fungsi Ambil Semua Data Nilai Sekali Saja
-async function loadDataNilaiMurid() {
-  const snapshot = await getDocs(collection(db, "nilai"));
-  nilaiCache = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  renderNilaiMuridPage(nilaiCache, currentPageNilai);
-}
 
 // === DEBOUNCE UTILITY
 function debounce(func, delay = 300) {
@@ -646,8 +638,10 @@ function bindDeleteButtons() {
           await deleteDoc(doc(db, "murid", docSnap.id));
         }
 
+        daftarMuridCache = daftarMuridCache.filter((m) => m.nama !== nama); // ⬅️ update cache
+        renderMuridTablePage(daftarMuridCache, currentPage);
+
         Swal.fire("Berhasil!", `Murid "${nama}" berhasil dihapus.`, "success");
-        tampilkanMurid(); // Refresh
       } catch (err) {
         console.error(err);
         Swal.fire("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
@@ -667,27 +661,24 @@ document
     });
 
     try {
-      const snapshot = await getDocs(collection(db, "nilai"));
-
-      if (snapshot.empty) {
-        Swal.fire("Kosong", "Belum ada data nilai untuk diekspor.", "info");
-        return;
+      if (nilaiCache.length === 0) {
+        return Swal.fire(
+          "Kosong",
+          "Belum ada data nilai untuk diekspor.",
+          "info"
+        );
       }
 
-      const dataExport = [];
-      snapshot.forEach((doc) => {
-        const d = doc.data();
-        dataExport.push({
-          Nama: d.nama || "",
-          Kelas: d.kelas || "",
-          Level: d.level || "",
-          Cabang: d.cabang || "",
-          Reading: d.reading ?? "",
-          Listening: d.listening ?? "",
-          Writing: d.writing ?? "",
-          Speaking: d.speaking ?? "",
-        });
-      });
+      const dataExport = nilaiCache.map((d) => ({
+        Nama: d.nama || "",
+        Kelas: d.kelas || "",
+        Level: d.level || "",
+        Cabang: d.cabang || "",
+        Reading: d.reading ?? "",
+        Listening: d.listening ?? "",
+        Writing: d.writing ?? "",
+        Speaking: d.speaking ?? "",
+      }));
 
       const worksheet = XLSX.utils.json_to_sheet(dataExport);
       const workbook = XLSX.utils.book_new();
@@ -911,11 +902,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   tampilkanMurid(); // render data tabel
   isiOpsiNilaiSelect();
   loadDataNilaiMurid(); // tampilkan nilai di daftar
-});
-
-// === INISIALISASI SAAT HALAMAN DIMUAT
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadCaches();
 });
 
 function isiOpsiNilaiSelect() {
