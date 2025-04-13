@@ -400,3 +400,33 @@ select:focus {
   margin: 0 5px;
   color: #ccc;
 }
+
+/* === MODERN SCROLLBAR UNTUK TABLE WRAPPER === */
+.table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #2a2a3b;
+  border-radius: 10px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: #64b5f6;
+  border-radius: 10px;
+  border: 2px solid #2a2a3b;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #42a5f5;
+}
+
+.footer {
+  margin-top: 60px;
+  padding: 20px;
+  text-align: center;
+  background-color: #1e1e2f;
+  color: #90caf9;
+  font-size: 0.9rem;
+  border-top: 1px solid #333;
+}
