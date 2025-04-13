@@ -565,6 +565,15 @@ document
 
     try {
       await setDoc(doc(db, "murid", editDocId), updatedData);
+
+      // ✅ Update data di daftarMuridCache
+      const index = daftarMuridCache.findIndex(
+        (m) => m.nama === updatedData.nama
+      );
+      if (index !== -1) {
+        daftarMuridCache[index] = updatedData;
+      }
+
       Swal.fire({
         icon: "success",
         title: "Berhasil!",
@@ -572,13 +581,14 @@ document
         timer: 1500,
         showConfirmButton: false,
       });
+
+      // ✅ Tutup modal dan render ulang
       const modal = document.getElementById("modalEditMurid");
       modal.classList.remove("show");
-      setTimeout(() => {
-        modal.classList.add("hidden");
-      }, 300); // 300ms = durasi animasi di CSS
+      setTimeout(() => modal.classList.add("hidden"), 300);
+
       editDocId = null;
-      tampilkanMurid();
+      renderMuridTablePage(daftarMuridCache, currentPage);
     } catch (err) {
       console.error("❌ Gagal edit murid:", err);
       Swal.fire("❌ Gagal menyimpan perubahan.");
@@ -780,6 +790,7 @@ let editNilaiId = null;
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-edit-nilai")) {
     const id = e.target.dataset.id;
+    editNilaiId = id; // ⬅️ WAJIB diset supaya tombol simpan bisa bekerja
 
     const data = nilaiCache.find((item) => item.id === id);
 
@@ -788,14 +799,11 @@ document.addEventListener("click", async (e) => {
       return Swal.fire("❌ Data tidak ditemukan.");
     }
 
-    // ✅ Isi form modal
-    document.getElementById("editNilaiId").value = id;
     document.getElementById("editReading").value = data.reading ?? "";
     document.getElementById("editListening").value = data.listening ?? "";
     document.getElementById("editWriting").value = data.writing ?? "";
     document.getElementById("editSpeaking").value = data.speaking ?? "";
 
-    // ✅ Tutup loading dan tampilkan modal
     Swal.close();
     const modal = document.getElementById("modalEditNilai");
     modal.classList.remove("hidden");
@@ -803,31 +811,48 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-btnSimpanEditNilai.addEventListener("click", async () => {
-  if (!editNilaiId) return;
+document
+  .getElementById("btnSimpanEditNilai")
+  .addEventListener("click", async () => {
+    if (!editNilaiId) return;
 
-  Swal.fire({
-    title: "Memuat data...",
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
+    const updated = {
+      reading: parseInt(document.getElementById("editReading")?.value) || null,
+      listening:
+        parseInt(document.getElementById("editListening")?.value) || null,
+      writing: parseInt(document.getElementById("editWriting")?.value) || null,
+      speaking:
+        parseInt(document.getElementById("editSpeaking")?.value) || null,
+    };
+
+    Swal.fire({
+      title: "Menyimpan...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      await setDoc(doc(db, "nilai", editNilaiId), updated, { merge: true });
+
+      Swal.fire({
+        icon: "success",
+        title: "✅ Berhasil",
+        text: "Data nilai berhasil diperbarui.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      editNilaiId = null;
+      document.getElementById("modalEditNilai").classList.remove("show");
+      setTimeout(() => {
+        document.getElementById("modalEditNilai").classList.add("hidden");
+      }, 300);
+      await loadDataNilaiMurid();
+    } catch (error) {
+      console.error("❌ Error saat menyimpan nilai:", error);
+      Swal.fire("❌ Gagal", "Terjadi kesalahan saat menyimpan.", "error");
+    }
   });
-
-  const updated = {
-    reading: parseInt(document.getElementById("editReading").value) || null,
-    listening: parseInt(document.getElementById("editListening").value) || null,
-    writing: parseInt(document.getElementById("editWriting").value) || null,
-    speaking: parseInt(document.getElementById("editSpeaking").value) || null,
-  };
-
-  await setDoc(doc(db, "nilai", editNilaiId), updated, { merge: true });
-  Swal.fire("✅ Berhasil", "Data nilai berhasil diperbarui", "success");
-  editNilaiId = null;
-
-  const modal = document.getElementById("modalEditNilai");
-  modal.classList.remove("show");
-  setTimeout(() => modal.classList.add("hidden"), 300);
-  await loadDataNilaiMurid();
-});
 
 // ✅ Batal
 btnBatalEditNilai.addEventListener("click", () => {
