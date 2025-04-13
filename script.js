@@ -12,13 +12,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBFi219yiToKp9D-7Ml6QeEWHqwHz3JgtE",
-  authDomain: "input-nilai-ujian-mec-kgm-klt.firebaseapp.com",
-  projectId: "input-nilai-ujian-mec-kgm-klt",
-  storageBucket: "input-nilai-ujian-mec-kgm-klt.firebasestorage.app",
-  messagingSenderId: "139888117338",
-  appId: "1:139888117338:web:b9a8af60e0d173c6e07a63",
-  measurementId: "G-YGZKCRFR5W",
+  apiKey: "AIzaSyC-BjO0mhGlYH7Ik4xyVPzcFk1nMU8ZQrw",
+  authDomain: "mec-kgm-klt-input-nilai-ujian.firebaseapp.com",
+  projectId: "mec-kgm-klt-input-nilai-ujian",
+  storageBucket: "mec-kgm-klt-input-nilai-ujian.firebasestorage.app",
+  messagingSenderId: "348388741147",
+  appId: "1:348388741147:web:5c0a5a43cd824354f368be",
+  measurementId: "G-HGXFZZ1RZT",
 };
 
 const app = initializeApp(firebaseConfig);
