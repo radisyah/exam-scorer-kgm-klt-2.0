@@ -55,6 +55,7 @@ if (akses === "admn123") {
   document.querySelector("#siswa-container").style.display = "block";
 
   document.getElementById("uploadSiswaSection").style.display = "block";
+  document.getElementById("uploadSiswaNilaiSection").style.display = "block";
   document.getElementById("daftarMuridSection").style.display = "block";
   document.getElementById("daftarNilaiSection").style.display = "block";
 }
@@ -124,8 +125,92 @@ document.getElementById("excelInput").addEventListener("change", (e) => {
   reader.readAsArrayBuffer(file);
 });
 
+document.getElementById("excelNilaiInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // ✅ Validasi format hanya .xlsx
+  const allowedExtension = /\.xlsx$/i;
+  if (!allowedExtension.test(file.name)) {
+    Swal.fire(
+      "Format Tidak Valid",
+      "Silakan upload file berformat .xlsx saja.",
+      "error"
+    );
+    e.target.value = ""; // reset input
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const data = new Uint8Array(event.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    siswaArray = XLSX.utils.sheet_to_json(sheet, {
+      header: [
+        "nama",
+        "kelas",
+        "level",
+        "cabang",
+        "reading",
+        "listening",
+        "writing",
+        "speaking",
+        "matematika",
+      ],
+      range: 1,
+    });
+
+    if (siswaArray.length === 0) {
+      Swal.fire("Kosong", "Tidak ada data ditemukan dalam file.", "info");
+      return;
+    }
+
+    const invalidRows = siswaArray.filter(
+      (s) =>
+        !s.nama ||
+        !s.kelas ||
+        !s.level ||
+        !s.cabang ||
+        !s.reading ||
+        !s.listening ||
+        !s.writing ||
+        !s.speaking
+    );
+    if (invalidRows.length > 0) {
+      Swal.fire(
+        "❌ Validasi Gagal",
+        "Ada baris yang belum lengkap. Pastikan semua kolom terisi.",
+        "error"
+      );
+      return;
+    }
+
+    let htmlTable = "<table style='width:100%;text-align:left'>";
+    htmlTable +=
+      "<tr><th>Nama</th><th>Kelas</th><th>Level</th><th>Cabang</th><th>Reading</th><th>Listening</th><th>Writing</th><th>Speaking</th><th>Matematika</th></tr>";
+    siswaArray.forEach((s) => {
+      htmlTable += `<tr><td>${s.nama}</td><td>${s.kelas}</td><td>${s.level}</td><td>${s.cabang}</td><td>${s.reading}</td><td>${s.listening}</td><td>${s.writing}</td><td>${s.speaking}</td><td>${s.matematika}</td></tr>`;
+    });
+    htmlTable += "</table>";
+
+    Swal.fire({
+      title: "Preview Data",
+      html: htmlTable,
+      width: "70%",
+      confirmButtonText: "Cek & Simpan",
+      showCancelButton: true,
+      cancelButtonText: "Batal",
+      preConfirm: () => simpanNilaiTanpaDuplikat(siswaArray),
+    });
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
 // === FETCH CACHE DATA SEKALI
 async function loadCaches() {
+  console.log("📡 Memuat cache dari Firestore...");
   const [muridSnapshot, nilaiSnapshot] = await Promise.all([
     getDocs(collection(db, "murid")),
     getDocs(collection(db, "nilai")),
@@ -135,6 +220,60 @@ async function loadCaches() {
     ...doc.data(),
   }));
   nilaiCache = nilaiSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  console.log(
+    "✅ Cache murid & nilai siap!",
+    daftarMuridCache.length,
+    nilaiCache.length
+  );
+}
+
+function initInputCari() {
+  inputCari.addEventListener(
+    "input",
+    debounce(() => {
+      // ✅ Lihat cache saat user mengetik
+      console.log("📦 Cache Murid:", daftarMuridCache);
+      console.log("📦 Cache Nilai:", nilaiCache);
+
+      if (daftarMuridCache.length === 0) {
+        console.warn("⚠️ Cache murid belum siap");
+        return;
+      }
+
+      const keyword = inputCari.value.toLowerCase();
+      if (!keyword) return sembunyikanFormNilai();
+
+      const hasil = daftarMuridCache.find((m) =>
+        m.nama.toLowerCase().includes(keyword)
+      );
+
+      if (hasil) {
+        console.log("✅ Ditemukan murid:", hasil);
+
+        muridDipilih = hasil;
+        hasilCari.textContent = `Ditemukan: ${hasil.nama} (Kelas ${hasil.kelas}, Level ${hasil.level}, Cabang ${hasil.cabang})`;
+        judulFormNilai.textContent = `Input / Edit nilai untuk ${hasil.nama}`;
+
+        const data = nilaiCache.find(
+          (n) => n.nama.toLowerCase() === hasil.nama.toLowerCase()
+        );
+
+        console.log("📥 Nilai ditemukan di cache:", data);
+
+        document.getElementById("reading").value = data?.reading ?? "";
+        document.getElementById("listening").value = data?.listening ?? "";
+        document.getElementById("writing").value = data?.writing ?? "";
+        document.getElementById("speaking").value = data?.speaking ?? "";
+        document.getElementById("matematika").value = data?.matematika ?? "";
+
+        formNilai.classList.remove("hidden");
+      } else {
+        console.log("❌ Murid tidak ditemukan di cache.");
+        hasilCari.textContent = "❌ Murid tidak ditemukan.";
+        sembunyikanFormNilai();
+      }
+    }, 300)
+  );
 }
 
 async function simpanTanpaDuplikat(siswaArray) {
@@ -185,6 +324,67 @@ async function simpanTanpaDuplikat(siswaArray) {
   document.getElementById("excelInput").value = "";
 }
 
+async function simpanNilaiTanpaDuplikat(siswaArray) {
+  const total = siswaArray.length;
+  let berhasil = 0;
+  let duplikat = [];
+
+  // Reset daftarMuridCache sebelum proses baru dimulai
+  daftarMuridCache = [];
+
+  Swal.fire({
+    title: "Menyimpan data...",
+    html: `
+      <div id="progressText">0 / ${total} disimpan</div>
+      <div style="width: 100%; background: #ccc; border-radius: 5px; overflow: hidden; margin-top: 10px;">
+        <div id="progressBar" style="width: 0%; height: 10px; background: #1976d2;"></div>
+      </div>
+    `,
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+  });
+
+  for (let i = 0; i < total; i++) {
+    const siswa = siswaArray[i];
+
+    // Pengecekan duplikat di Firestore
+    const querySnapshot = await getDocs(
+      query(collection(db, "nilai"), where("nama", "==", siswa.nama))
+    );
+
+    if (!querySnapshot.empty) {
+      // Jika ada data yang sudah ada di Firestore, tandai sebagai duplikat
+      duplikat.push(siswa.nama);
+    } else {
+      // Jika tidak ada duplikat, simpan data ke Firestore
+      const docRef = await addDoc(collection(db, "nilai"), siswa);
+      // Tambahkan siswa ke cache
+      daftarMuridCache.push({ id: docRef.id, ...siswa });
+      berhasil++;
+    }
+
+    // Update progress bar
+    const percent = Math.floor(((i + 1) / total) * 100);
+    document.getElementById("progressBar").style.width = `${percent}%`;
+    document.getElementById("progressText").textContent = `${
+      i + 1
+    } / ${total} diproses`;
+  }
+
+  // Setelah selesai, tampilkan notifikasi
+  Swal.fire({
+    icon: duplikat.length ? "warning" : "success",
+    title: "Selesai",
+    html: `✅ ${berhasil} berhasil disimpan.<br>❌ Duplikat: ${
+      duplikat.length > 0 ? duplikat.join(", ") : "Tidak ada"
+    }`,
+  });
+
+  // Reset input file setelah selesai
+  document.getElementById("excelNilaiInput").value = "";
+}
+
 function resetFormNilai() {
   ["reading", "listening", "writing", "speaking", "matematika"].forEach(
     (id) => (document.getElementById(id).value = "")
@@ -217,121 +417,91 @@ function debounce(func, delay = 300) {
   };
 }
 
-// === PENCARIAN NILAI BERDASARKAN CACHE
-inputCari.addEventListener(
-  "input",
-  debounce(() => {
-    const keyword = inputCari.value.toLowerCase();
-    if (!keyword) return sembunyikanFormNilai();
+// inputCari.addEventListener(
+//   "input",
+//   debounce(() => {
+//     const keyword = inputCari.value.trim().toLowerCase();
+//     if (!keyword) {
+//       console.log("⛔ Keyword kosong. Tidak mencari apa pun.");
+//       return sembunyikanFormNilai();
+//     }
 
-    const hasil = daftarMuridCache.find((m) =>
-      m.nama.toLowerCase().includes(keyword)
-    );
+//     // ✅ Lihat isi cache murid dan nilai saat ini
+//     console.log("📦 Cache Murid:", daftarMuridCache);
+//     console.log("📦 Cache Nilai:", nilaiCache);
 
-    if (hasil) {
-      muridDipilih = hasil;
-      hasilCari.textContent = `Ditemukan: ${hasil.nama} (Kelas ${hasil.kelas}, Level ${hasil.level}, Cabang ${hasil.cabang})`;
-      judulFormNilai.textContent = `Input / Edit nilai untuk ${hasil.nama}`;
+//     const hasil = daftarMuridCache.find((m) =>
+//       m.nama.toLowerCase().includes(keyword)
+//     );
 
-      const data = nilaiCache.find(
-        (n) => n.nama.toLowerCase() === hasil.nama.toLowerCase()
-      );
+//     if (hasil) {
+//       console.log("✅ Ditemukan di cache murid:", hasil);
 
-      if (data) {
-        document.getElementById("reading").value = data.reading ?? "";
-        document.getElementById("listening").value = data.listening ?? "";
-        document.getElementById("writing").value = data.writing ?? "";
-        document.getElementById("speaking").value = data.speaking ?? "";
-        document.getElementById("matematika").value = data.matematika ?? "";
-      } else {
-        resetFormNilai();
-      }
+//       muridDipilih = hasil;
+//       hasilCari.textContent = `Ditemukan: ${hasil.nama} (Kelas ${hasil.kelas}, Level ${hasil.level}, Cabang ${hasil.cabang})`;
+//       judulFormNilai.textContent = `Input / Edit nilai untuk ${hasil.nama}`;
 
-      formNilai.classList.remove("hidden");
-    } else {
-      hasilCari.textContent = "❌ Murid tidak ditemukan.";
-      sembunyikanFormNilai();
-    }
-  }, 300)
-);
+//       const nilai = nilaiCache.find(
+//         (n) => n.nama.toLowerCase() === hasil.nama.toLowerCase()
+//       );
 
-// Simpan nilai murid
+//       console.log("📥 Nilai ditemukan di cache:", nilai);
+
+//       document.getElementById("reading").value = nilai?.reading ?? "";
+//       document.getElementById("listening").value = nilai?.listening ?? "";
+//       document.getElementById("writing").value = nilai?.writing ?? "";
+//       document.getElementById("speaking").value = nilai?.speaking ?? "";
+//       document.getElementById("matematika").value = nilai?.matematika ?? "";
+
+//       formNilai.classList.remove("hidden");
+//     } else {
+//       console.log("❌ Tidak ditemukan di cache murid");
+//       hasilCari.textContent = "❌ Murid tidak ditemukan.";
+//       sembunyikanFormNilai();
+//     }
+//   }, 300)
+// );
+
 document
   .getElementById("simpanNilaiBtn")
   .addEventListener("click", async () => {
-    if (!muridDipilih) {
-      Swal.fire({
-        icon: "warning",
-        title: "Belum memilih murid",
-        text: "Silakan cari dan pilih murid terlebih dahulu.",
-      });
-      return;
-    }
-
-    const reading = parseInt(document.getElementById("reading").value) || null;
-    const listening =
-      parseInt(document.getElementById("listening").value) || null;
-    const writing = parseInt(document.getElementById("writing").value) || null;
-    const speaking =
-      parseInt(document.getElementById("speaking").value) || null;
-    const matematika =
-      parseInt(document.getElementById("matematika").value) || null;
-
-    if (!reading && !listening && !writing && !speaking && !matematika) {
-      Swal.fire({
-        icon: "warning",
-        title: "Belum memilih Nilai",
-        text: "Minimal isi satu nilai sebelum menyimpan.",
-      });
-      return;
-    }
+    if (!muridDipilih) return Swal.fire("❌ Belum memilih murid.");
 
     const nilai = {
       nama: muridDipilih.nama,
       kelas: muridDipilih.kelas,
       level: muridDipilih.level,
       cabang: muridDipilih.cabang,
-      reading,
-      listening,
-      writing,
-      speaking,
-      matematika,
+      reading: parseInt(document.getElementById("reading").value) || null,
+      listening: parseInt(document.getElementById("listening").value) || null,
+      writing: parseInt(document.getElementById("writing").value) || null,
+      speaking: parseInt(document.getElementById("speaking").value) || null,
+      matematika: parseInt(document.getElementById("matematika").value) || null,
       tanggal: new Date().toISOString(),
     };
 
     Swal.fire({
       title: "Menyimpan nilai...",
-      text: `Menyimpan data nilai untuk ${muridDipilih.nama}`,
-      allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
 
     try {
-      const docRef = doc(db, "nilai", muridDipilih.nama.toLowerCase());
-      await setDoc(docRef, nilai, { merge: true });
-
-      // Update nilaiCache secara langsung
-      nilaiCache.push({ id: docRef.id, ...nilai }); // Tambahkan nilai baru ke cache
-
-      Swal.fire({
-        icon: "success",
-        title: "Nilai Disimpan",
-        text: `${muridDipilih.nama} berhasil disimpan.`,
-        timer: 1500,
-        showConfirmButton: false,
+      await setDoc(doc(db, "nilai", muridDipilih.nama.toLowerCase()), nilai, {
+        merge: true,
       });
+
+      // ✅ Update nilaiCache LOKAL
+      const index = nilaiCache.findIndex((n) => n.nama === muridDipilih.nama);
+      if (index !== -1) nilaiCache[index] = { ...nilaiCache[index], ...nilai };
+      else nilaiCache.push({ id: muridDipilih.nama.toLowerCase(), ...nilai });
+
+      Swal.fire("✅ Nilai disimpan", "", "success");
       resetFormNilai();
       sembunyikanFormNilai();
-
-      // Render ulang daftar nilai murid
-      await loadDataNilaiMurid(); // Memanggil fungsi untuk memuat data nilai murid
+      renderNilaiMuridPage(nilaiCache, currentPageNilai); // opsional
     } catch (err) {
-      console.error("❌ Gagal simpan nilai:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal menyimpan nilai",
-        text: "Terjadi kesalahan. Silakan coba lagi.",
-      });
+      console.error(err);
+      Swal.fire("❌ Gagal menyimpan nilai", "", "error");
     }
   });
 
@@ -500,6 +670,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // Simpan Edit
+
 document
   .getElementById("btnSimpanEditMurid")
   .addEventListener("click", async () => {
@@ -615,6 +786,7 @@ function bindDeleteButtons() {
 }
 
 // Export nilai
+
 document
   .getElementById("btnExportNilai")
   .addEventListener("click", async () => {
@@ -643,6 +815,7 @@ document
         Listening: d.listening ?? "",
         Writing: d.writing ?? "",
         Speaking: d.speaking ?? "",
+        Matematika: d.matematika ?? "",
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(dataExport);
@@ -797,10 +970,10 @@ document
     try {
       await setDoc(doc(db, "nilai", editNilaiId), updated, { merge: true });
 
-      // Update nilaiCache secara langsung
+      // ✅ Update nilaiCache lokal
       const index = nilaiCache.findIndex((item) => item.id === editNilaiId);
       if (index !== -1) {
-        nilaiCache[index] = { ...nilaiCache[index], ...updated }; // Update nilai yang ada
+        nilaiCache[index] = { ...nilaiCache[index], ...updated };
       }
 
       Swal.fire({
@@ -817,8 +990,8 @@ document
         document.getElementById("modalEditNilai").classList.add("hidden");
       }, 300);
 
-      // Render ulang daftar nilai murid
-      loadDataNilaiMurid(); // Memanggil fungsi untuk memuat data nilai murid
+      // ✅ render ulang langsung dari cache
+      renderNilaiMuridPage(nilaiCache, currentPageNilai);
     } catch (error) {
       console.error("❌ Error saat menyimpan nilai:", error);
       Swal.fire("❌ Gagal", "Terjadi kesalahan saat menyimpan.", "error");
@@ -885,13 +1058,6 @@ window.changePage = function (page) {
   renderMuridTablePage(daftarMuridCache, currentPage);
 };
 
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadCaches(); // isi cache murid & nilai
-  tampilkanMurid(); // render data tabel
-  isiOpsiNilaiSelect();
-  loadDataNilaiMurid(); // tampilkan nilai di daftar
-});
-
 function isiOpsiNilaiSelect() {
   const nilaiOptions = [
     "",
@@ -927,3 +1093,11 @@ function isiOpsiNilaiSelect() {
     });
   });
 }
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadCaches(); // ✅ Ambil semua data murid dan nilai sekali saja
+  tampilkanMurid(); // ✅ Render daftar murid
+  renderNilaiMuridPage(nilaiCache, currentPageNilai); // ✅ Render nilai dari cache
+  isiOpsiNilaiSelect();
+  initInputCari(); // ⬅️ tambahkan ini di sini
+});
