@@ -1,0 +1,23 @@
+body {
+  background-color: #121212; /* Warna latar belakang gelap */
+  color: #ffffff; /* Warna teks putih */
+  font-family: Arial, sans-serif; /* Font yang digunakan */
+  display: flex; /* Menggunakan flexbox untuk penataan */
+  justify-content: center; /* Mengatur konten ke tengah secara horizontal */
+  align-items: center; /* Mengatur konten ke tengah secara vertikal */
+  height: 100vh; /* Mengatur tinggi body menjadi 100% dari viewport */
+  margin: 0; /* Menghilangkan margin default */
+}
+
+.container {
+  text-align: center; /* Mengatur teks menjadi rata tengah */
+}
+
+h1 {
+  font-size: 5rem; /* Ukuran font untuk judul */
+  margin: 0; /* Menghilangkan margin */
+}
+
+p {
+  font-size: 1.5rem; /* Ukuran font untuk paragraf */
+}
