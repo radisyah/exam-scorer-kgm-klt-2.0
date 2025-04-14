@@ -12,13 +12,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC-BjO0mhGlYH7Ik4xyVPzcFk1nMU8ZQrw",
-  authDomain: "mec-kgm-klt-input-nilai-ujian.firebaseapp.com",
-  projectId: "mec-kgm-klt-input-nilai-ujian",
-  storageBucket: "mec-kgm-klt-input-nilai-ujian.firebasestorage.app",
-  messagingSenderId: "348388741147",
-  appId: "1:348388741147:web:5c0a5a43cd824354f368be",
-  measurementId: "G-HGXFZZ1RZT",
+  apiKey: "AIzaSyAePHk2SUscllq5zjVz8nfDoi6OLDqX_40",
+  authDomain: "mec-kgm-klt-input-nilai-6c367.firebaseapp.com",
+  projectId: "mec-kgm-klt-input-nilai-6c367",
+  storageBucket: "mec-kgm-klt-input-nilai-6c367.firebasestorage.app",
+  messagingSenderId: "1075575468794",
+  appId: "1:1075575468794:web:0004896cf4e59a1aaacf43",
+  measurementId: "G-544XBNRY4L",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -48,7 +48,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const akses = urlParams.get("akses");
 
 // Cek apakah situs sedang dalam perbaikan
-const isUnderMaintenance = true; // Ubah menjadi false jika situs sudah siap
+const isUnderMaintenance = false; // Ubah menjadi false jika situs sudah siap
 
 // Fungsi untuk mengarahkan ke halaman 404 jika dalam perbaikan
 function checkMaintenance() {
