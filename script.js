@@ -544,14 +544,14 @@ cariNilaiInput.addEventListener(
       }</h3>
         <p>📖 Reading: ${data.reading !== null ? data.reading : "menunggu"}</p>
         <p>🎧 Listening: ${
-          data.listening !== null ? data.reading : "menunggu"
+          data.listening !== null ? data.listening : "menunggu"
         }</p>
-        <p>✍️ Writing: ${data.writing !== null ? data.reading : "menunggu"}</p>
+        <p>✍️ Writing: ${data.writing !== null ? data.writing : "menunggu"}</p>
         <p>🗣️ Speaking: ${
-          data.speaking !== null ? data.reading : "menunggu"
+          data.speaking !== null ? data.speaking : "menunggu"
         }</p>
         <p>🔢 Matematika: ${
-          data.matematika !== null ? data.reading : "menunggu"
+          data.matematika !== null ? data.matematika : "menunggu"
         }</p>
       </div>
     `;
