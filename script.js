@@ -74,20 +74,39 @@ function checkMaintenance() {
 }
 
 // Panggil fungsi saat halaman dimuat
-window.onload = checkMaintenance;
+window.onload = () => {
+  checkMaintenance();
 
-if (akses === "tchr123") {
-  document.querySelector("#siswa-container").style.display = "block";
-}
+  const akses = new URLSearchParams(window.location.search).get("akses");
 
-if (akses === "admn123") {
-  document.querySelector("#siswa-container").style.display = "block";
+  // Sembunyikan semua section dulu
+  document.querySelector("#siswa-container").style.display = "none";
+  document.getElementById("uploadSiswaSection").style.display = "none";
+  document.getElementById("uploadSiswaNilaiSection").style.display = "none";
+  document.getElementById("daftarMuridSection").style.display = "none";
+  document.getElementById("daftarNilaiSection").style.display = "none";
+  document.getElementById("cariNilaiSection").style.display = "none"; // disembunyikan dulu
 
-  document.getElementById("uploadSiswaSection").style.display = "block";
-  document.getElementById("uploadSiswaNilaiSection").style.display = "block";
-  document.getElementById("daftarMuridSection").style.display = "block";
-  document.getElementById("daftarNilaiSection").style.display = "block";
-}
+  // Tampilkan berdasarkan akses
+  if (akses === "tchr123") {
+    document.querySelector("#siswa-container").style.display = "block";
+    document.getElementById("cariNilaiSection").style.display = "block";
+  }
+
+  if (akses === "admn123") {
+    document.querySelector("#siswa-container").style.display = "block";
+    document.getElementById("uploadSiswaSection").style.display = "block";
+    document.getElementById("uploadSiswaNilaiSection").style.display = "block";
+    document.getElementById("daftarMuridSection").style.display = "block";
+    document.getElementById("daftarNilaiSection").style.display = "block";
+    // Tidak tampilkan cariNilaiSection untuk admin
+  }
+
+  // Jika tanpa akses, hanya tampilkan fitur pencarian nilai
+  if (!akses) {
+    document.getElementById("cariNilaiSection").style.display = "block";
+  }
+};
 
 document.getElementById("excelInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
