@@ -44,36 +44,6 @@ let currentPageNilai = 1;
 const itemsPerPage = 5;
 const itemsPerPageNilai = 5;
 
-const urlParams = new URLSearchParams(window.location.search);
-const akses = urlParams.get("akses");
-
-// Cek apakah situs sedang dalam perbaikan
-const isUnderMaintenance = false; // Ubah menjadi false jika situs sudah siap
-
-// Fungsi untuk mengarahkan ke halaman 404 jika dalam perbaikan
-function checkMaintenance() {
-  if (isUnderMaintenance) {
-    window.location.href = "404.html";
-  } else {
-    // Jika tidak dalam perbaikan, jalankan logika akses
-    const akses = "tchr123"; // Ganti dengan logika autentikasi yang sesuai
-
-    if (akses === "tchr123") {
-      document.querySelector("#siswa-container").style.display = "block";
-    }
-
-    if (akses === "admn123") {
-      document.querySelector("#siswa-container").style.display = "block";
-      document.getElementById("uploadSiswaSection").style.display = "block";
-      document.getElementById("uploadSiswaNilaiSection").style.display =
-        "block";
-      document.getElementById("daftarMuridSection").style.display = "block";
-      document.getElementById("daftarNilaiSection").style.display = "block";
-    }
-  }
-}
-
-// Panggil fungsi saat halaman dimuat
 window.onload = () => {
   checkMaintenance();
 
