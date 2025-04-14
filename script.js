@@ -44,39 +44,50 @@ let currentPageNilai = 1;
 const itemsPerPage = 5;
 const itemsPerPageNilai = 5;
 
-window.onload = () => {
-  checkMaintenance();
+// === KONFIGURASI MAINTENANCE ===
+const isUnderMaintenance = false; // Ubah menjadi true jika situs sedang perbaikan
 
+// === CEK DAN ATUR TAMPILAN AKSES ===
+function checkMaintenance() {
+  if (isUnderMaintenance) {
+    window.location.href = "404.html";
+    return;
+  }
+
+  // Ambil parameter akses dari URL (misalnya: index.html?akses=tchr123)
   const akses = new URLSearchParams(window.location.search).get("akses");
 
-  // Sembunyikan semua section dulu
+  // Sembunyikan semua section terlebih dahulu
   document.querySelector("#siswa-container").style.display = "none";
   document.getElementById("uploadSiswaSection").style.display = "none";
   document.getElementById("uploadSiswaNilaiSection").style.display = "none";
   document.getElementById("daftarMuridSection").style.display = "none";
   document.getElementById("daftarNilaiSection").style.display = "none";
-  document.getElementById("cariNilaiSection").style.display = "none"; // disembunyikan dulu
+  document.getElementById("cariNilaiSection").style.display = "none";
 
-  // Tampilkan berdasarkan akses
+  // Akses guru
   if (akses === "tchr123") {
     document.querySelector("#siswa-container").style.display = "block";
     document.getElementById("cariNilaiSection").style.display = "block";
   }
 
+  // Akses admin
   if (akses === "admn123") {
     document.querySelector("#siswa-container").style.display = "block";
     document.getElementById("uploadSiswaSection").style.display = "block";
     document.getElementById("uploadSiswaNilaiSection").style.display = "block";
     document.getElementById("daftarMuridSection").style.display = "block";
     document.getElementById("daftarNilaiSection").style.display = "block";
-    // Tidak tampilkan cariNilaiSection untuk admin
   }
 
-  // Jika tanpa akses, hanya tampilkan fitur pencarian nilai
+  // Tanpa akses: hanya bisa lihat fitur cari nilai
   if (!akses) {
     document.getElementById("cariNilaiSection").style.display = "block";
   }
-};
+}
+
+// Jalankan saat halaman dimuat
+window.onload = checkMaintenance;
 
 document.getElementById("excelInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
