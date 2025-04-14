@@ -210,7 +210,6 @@ document.getElementById("excelNilaiInput").addEventListener("change", (e) => {
 
 // === FETCH CACHE DATA SEKALI
 async function loadCaches() {
-  console.log("📡 Memuat cache dari Firestore...");
   const [muridSnapshot, nilaiSnapshot] = await Promise.all([
     getDocs(collection(db, "murid")),
     getDocs(collection(db, "nilai")),
@@ -220,21 +219,12 @@ async function loadCaches() {
     ...doc.data(),
   }));
   nilaiCache = nilaiSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  console.log(
-    "✅ Cache murid & nilai siap!",
-    daftarMuridCache.length,
-    nilaiCache.length
-  );
 }
 
 function initInputCari() {
   inputCari.addEventListener(
     "input",
     debounce(() => {
-      // ✅ Lihat cache saat user mengetik
-      console.log("📦 Cache Murid:", daftarMuridCache);
-      console.log("📦 Cache Nilai:", nilaiCache);
-
       if (daftarMuridCache.length === 0) {
         console.warn("⚠️ Cache murid belum siap");
         return;
@@ -248,8 +238,6 @@ function initInputCari() {
       );
 
       if (hasil) {
-        console.log("✅ Ditemukan murid:", hasil);
-
         muridDipilih = hasil;
         hasilCari.textContent = `Ditemukan: ${hasil.nama} (Kelas ${hasil.kelas}, Level ${hasil.level}, Cabang ${hasil.cabang})`;
         judulFormNilai.textContent = `Input / Edit nilai untuk ${hasil.nama}`;
@@ -257,8 +245,6 @@ function initInputCari() {
         const data = nilaiCache.find(
           (n) => n.nama.toLowerCase() === hasil.nama.toLowerCase()
         );
-
-        console.log("📥 Nilai ditemukan di cache:", data);
 
         document.getElementById("reading").value = data?.reading ?? "";
         document.getElementById("listening").value = data?.listening ?? "";
@@ -268,7 +254,6 @@ function initInputCari() {
 
         formNilai.classList.remove("hidden");
       } else {
-        console.log("❌ Murid tidak ditemukan di cache.");
         hasilCari.textContent = "❌ Murid tidak ditemukan.";
         sembunyikanFormNilai();
       }
