@@ -45,7 +45,7 @@ const itemsPerPage = 5;
 const itemsPerPageNilai = 5;
 
 // === KONFIGURASI MAINTENANCE ===
-const isUnderMaintenance = false; // Ubah menjadi true jika situs sedang perbaikan
+const isUnderMaintenance = true; // Ubah menjadi true jika situs sedang perbaikan
 
 // === CEK DAN ATUR TAMPILAN AKSES ===
 function checkMaintenance() {
