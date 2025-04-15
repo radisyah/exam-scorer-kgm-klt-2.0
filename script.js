@@ -526,29 +526,26 @@ cariNilaiInput.addEventListener(
 
     if (!keyword) return;
 
-    const data = nilaiCache.find(
-      (d) => d.nama.toLowerCase().includes(keyword) // Pastikan tanda kurung di sini lengkap.
-    );
+    const data = nilaiCache.find((d) => d.nama.toLowerCase().includes(keyword));
 
     if (data) {
+      // Cari murid dari cache murid berdasarkan nama
+      const murid = daftarMuridCache.find(
+        (m) => m.nama.toLowerCase() === data.nama.toLowerCase()
+      );
+
       hasilNilai.innerHTML = `
-      <div class="nilai-card">
-        <h3>${data.nama} - ${data.cabang}, Kelas ${data.kelas}, Level ${
-        data.level
-      }</h3>
-        <p>📖 Reading: ${data.reading !== null ? data.reading : "menunggu"}</p>
-        <p>🎧 Listening: ${
-          data.listening !== null ? data.listening : "menunggu"
-        }</p>
-        <p>✍️ Writing: ${data.writing !== null ? data.writing : "menunggu"}</p>
-        <p>🗣️ Speaking: ${
-          data.speaking !== null ? data.speaking : "menunggu"
-        }</p>
-        <p>🔢 Matematika: ${
-          data.matematika !== null ? data.matematika : "menunggu"
-        }</p>
-      </div>
-    `;
+        <div class="nilai-card">
+          <h3>${data.nama} - ${murid?.cabang || "-"}, Kelas ${
+        murid?.kelas || "-"
+      }, Level ${murid?.level || "-"}</h3>
+          <p>📖 Reading: ${data.reading ?? "menunggu"}</p>
+          <p>🎧 Listening: ${data.listening ?? "menunggu"}</p>
+          <p>✍️ Writing: ${data.writing ?? "menunggu"}</p>
+          <p>🗣️ Speaking: ${data.speaking ?? "menunggu"}</p>
+          <p>🔢 Matematika: ${data.matematika ?? "menunggu"}</p>
+        </div>
+      `;
     } else {
       hasilNilai.textContent = "❌ Nilai tidak ditemukan.";
     }
@@ -849,17 +846,25 @@ document
 
 function filterAndExportReadingByCabang(cabang) {
   const ENDPOINT_KGM =
-    "https://script.google.com/macros/s/AKfycbz52S7w6731PG14zoXDlYoZ1y0yF9VKsnEqL7eZzfrW_7eyKp-64cgLGDfmoOscSRw_yg/exec";
+    "https://script.google.com/macros/s/AKfycbywIwFoz7XUzKvfPMRFYrSlBXKCMgb0AH_yEFoPjtLbAft8VhaGkHjxorE_XuVN3IaTmw/exec";
   const ENDPOINT_KLT =
-    "https://script.google.com/macros/s/AKfycbwcYl-6EE8I7Ms42LmE01A7iYz2bEidaEgKmIrNtqM8zu0ePbC-tFWy0nrCNVGuACj_SQ/exec";
+    "https://script.google.com/macros/s/AKfycbzgkNetCtix1Zsq-rb5LRhj4ygNpjvLWOmDhcwvGZqdHsI31QhweZKYTmcN_9nbAqXkfA/exec";
+
   const endpoint = cabang.toUpperCase() === "KGM" ? ENDPOINT_KGM : ENDPOINT_KLT;
 
-  // Merge cabang ke nilai
+  // Gabungkan nilai dengan murid (tambahkan noInduk & cabang)
   const merged = nilaiCache.map((nilai) => {
-    const murid = daftarMuridCache.find((m) => m.nama === nilai.nama);
-    return { ...nilai, cabang: murid?.cabang || "" };
+    const murid = daftarMuridCache.find(
+      (m) => m.nama.toLowerCase() === nilai.nama.toLowerCase()
+    );
+    return {
+      ...nilai,
+      cabang: murid?.cabang || "",
+      noInduk: murid?.noInduk || "",
+    };
   });
 
+  // Filter berdasarkan cabang
   const sorted = merged
     .filter((n) =>
       (n.cabang || "").toLowerCase().includes(cabang.toLowerCase())
@@ -868,6 +873,16 @@ function filterAndExportReadingByCabang(cabang) {
       String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
     );
 
+  // 🚫 Jika tidak ada data murid dari cabang tersebut
+  if (sorted.length === 0) {
+    return Swal.fire({
+      icon: "info",
+      title: `❌ Tidak Ada Data ${cabang.toUpperCase()}`,
+      text: `Tidak ditemukan murid dari cabang ${cabang.toUpperCase()} di daftar nilai.`,
+    });
+  }
+
+  // Cek kelengkapan data
   const incomplete = sorted.filter(
     (n) =>
       !n.noInduk ||
@@ -882,7 +897,9 @@ function filterAndExportReadingByCabang(cabang) {
     return Swal.fire({
       icon: "warning",
       title: `❌ Data ${cabang.toUpperCase()} Belum Lengkap`,
-      html: `Terdapat <b>${incomplete.length}</b> murid yang belum memiliki nilai lengkap.<br>Lengkapi dahulu sebelum mengekspor.`,
+      html: `Terdapat <b>${
+        incomplete.length
+      }</b> murid dari cabang ${cabang.toUpperCase()} yang belum memiliki nilai lengkap.<br>Lengkapi terlebih dahulu sebelum ekspor.`,
     });
   }
 
@@ -890,39 +907,39 @@ function filterAndExportReadingByCabang(cabang) {
   const previewTable = sorted
     .map(
       (n, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${n.noInduk}</td>
-        <td>${n.nama}</td>
-        <td>${n.reading}</td>
-        <td>${n.listening}</td>
-        <td>${n.writing}</td>
-        <td>${n.speaking}</td>
-      </tr>`
+        <tr>
+          <td>${i + 1}</td>
+          <td>${n.noInduk}</td>
+          <td>${n.nama}</td>
+          <td>${n.reading}</td>
+          <td>${n.listening}</td>
+          <td>${n.writing}</td>
+          <td>${n.speaking}</td>
+        </tr>`
     )
     .join("");
 
   Swal.fire({
     title: `📋 Konfirmasi Export Nilai ${cabang.toUpperCase()}`,
     html: `
-      <p>Berikut adalah data yang akan dikirim ke spreadsheet:</p>
-      <div style="max-height: 300px; overflow-y: auto; text-align:left">
-        <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
-          <thead>
-            <tr style="background:#333">
-              <th>#</th>
-              <th>No Induk</th>
-              <th>Nama</th>
-              <th>Reading</th>
-              <th>Listening</th>
-              <th>Writing</th>
-              <th>Speaking</th>
-            </tr>
-          </thead>
-          <tbody>${previewTable}</tbody>
-        </table>
-      </div>
-    `,
+        <p>Berikut adalah data yang akan dikirim ke spreadsheet:</p>
+        <div style="max-height: 300px; overflow-y: auto; text-align:left">
+          <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
+            <thead>
+              <tr style="background:#333; color:white">
+                <th>#</th>
+                <th>No Induk</th>
+                <th>Nama</th>
+                <th>Reading</th>
+                <th>Listening</th>
+                <th>Writing</th>
+                <th>Speaking</th>
+              </tr>
+            </thead>
+            <tbody>${previewTable}</tbody>
+          </table>
+        </div>
+      `,
     width: 750,
     showCancelButton: true,
     confirmButtonText: "✅ Kirim Sekarang",
@@ -930,6 +947,7 @@ function filterAndExportReadingByCabang(cabang) {
     if (!result.isConfirmed) return;
 
     const payload = {
+      noInduk: sorted.map((n) => n.noInduk ?? ""),
       reading: sorted.map((n) => n.reading ?? ""),
       listening: sorted.map((n) => n.listening ?? ""),
       writing: sorted.map((n) => n.writing ?? ""),
@@ -938,6 +956,7 @@ function filterAndExportReadingByCabang(cabang) {
 
     Swal.fire({
       title: "Mengirim data...",
+      text: `Sedang mengirim nilai ${cabang.toUpperCase()} ke spreadsheet...`,
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
@@ -952,14 +971,14 @@ function filterAndExportReadingByCabang(cabang) {
 
       Swal.fire(
         "✅ Sukses",
-        `Data ${cabang.toUpperCase()} berhasil dikirim ke Spreadsheet.`,
+        `Data ${cabang.toUpperCase()} berhasil dikirim ke spreadsheet.`,
         "success"
       );
     } catch (err) {
       console.error("❌ Gagal kirim:", err);
       Swal.fire(
         "❌ Gagal",
-        `Gagal mengirim data ${cabang.toUpperCase()}.`,
+        `Terjadi kesalahan saat mengirim data ${cabang.toUpperCase()}.`,
         "error"
       );
     }
@@ -1238,6 +1257,5 @@ window.addEventListener("DOMContentLoaded", async () => {
   tampilkanMurid(); // ✅ Render daftar murid
   renderNilaiMuridPage(nilaiCache, currentPageNilai); // ✅ Render nilai dari cache
   isiOpsiNilaiSelect();
-  // exportReadingToSheet();
   initInputCari(); // ⬅️ tambahkan ini di sini
 });
