@@ -177,10 +177,8 @@ document.getElementById("excelNilaiInput").addEventListener("change", (e) => {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     siswaArray = XLSX.utils.sheet_to_json(sheet, {
       header: [
+        "noInduk",
         "nama",
-        "kelas",
-        "level",
-        "cabang",
         "reading",
         "listening",
         "writing",
@@ -197,10 +195,8 @@ document.getElementById("excelNilaiInput").addEventListener("change", (e) => {
 
     const invalidRows = siswaArray.filter(
       (s) =>
+        !s.noInduk ||
         !s.nama ||
-        !s.kelas ||
-        !s.level ||
-        !s.cabang ||
         !s.reading ||
         !s.listening ||
         !s.writing ||
@@ -217,9 +213,9 @@ document.getElementById("excelNilaiInput").addEventListener("change", (e) => {
 
     let htmlTable = "<table style='width:100%;text-align:left'>";
     htmlTable +=
-      "<tr><th>Nama</th><th>Kelas</th><th>Level</th><th>Cabang</th><th>Reading</th><th>Listening</th><th>Writing</th><th>Speaking</th><th>Matematika</th></tr>";
+      "<tr><th>No Induk</th><th>Nama</th><th>Reading</th><th>Listening</th><th>Writing</th><th>Speaking</th><th>Matematika</th></tr>";
     siswaArray.forEach((s) => {
-      htmlTable += `<tr><td>${s.nama}</td><td>${s.kelas}</td><td>${s.level}</td><td>${s.cabang}</td><td>${s.reading}</td><td>${s.listening}</td><td>${s.writing}</td><td>${s.speaking}</td><td>${s.matematika}</td></tr>`;
+      htmlTable += `<tr><td>${s.noInduk}</td><td>${s.nama}</td><td>${s.reading}</td><td>${s.listening}</td><td>${s.writing}</td><td>${s.speaking}</td><td>${s.matematika}</td></tr>`;
     });
     htmlTable += "</table>";
 
@@ -851,122 +847,241 @@ document
     }
   });
 
-document
-  .getElementById("exportReadingToSheet")
-  .addEventListener("click", async () => {
-    if (nilaiCache.length === 0) {
-      return Swal.fire(
-        "Kosong",
-        "Belum ada data nilai untuk diekspor.",
-        "info"
-      );
-    }
+// document
+//   .getElementById("exportReadingToSheet")
+//   .addEventListener("click", async () => {
+//     if (nilaiCache.length === 0) {
+//       return Swal.fire(
+//         "Kosong",
+//         "Belum ada data nilai untuk diekspor.",
+//         "info"
+//       );
+//     }
 
-    // Urutkan berdasarkan noInduk
-    const sortedData = [...nilaiCache].sort((a, b) =>
+//     // Urutkan berdasarkan noInduk
+//     const sortedData = [...nilaiCache].sort((a, b) =>
+//       String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
+//     );
+
+//     // Validasi kelengkapan nilai
+//     const incomplete = sortedData.filter(
+//       (n) =>
+//         (!n.reading && n.reading !== 0) ||
+//         (!n.listening && n.listening !== 0) ||
+//         (!n.writing && n.writing !== 0) ||
+//         (!n.speaking && n.speaking !== 0)
+//     );
+
+//     if (incomplete.length > 0) {
+//       return Swal.fire({
+//         icon: "warning",
+//         title: "❌ Data Belum Lengkap",
+//         html: `Terdapat <b>${incomplete.length}</b> murid yang belum memiliki nilai lengkap.<br>Lengkapi terlebih dahulu sebelum mengekspor.`,
+//       });
+//     }
+
+//     // Preview tabel nilai
+//     const previewTable = sortedData
+//       .map(
+//         (n, i) => `
+//         <tr>
+//           <td>${i + 1}</td>
+//           <td>${n.noInduk || "-"}</td>
+//           <td>${n.nama}</td>
+//           <td>${n.reading}</td>
+//           <td>${n.listening}</td>
+//           <td>${n.writing}</td>
+//           <td>${n.speaking}</td>
+//         </tr>
+//       `
+//       )
+//       .join("");
+
+//     const { isConfirmed } = await Swal.fire({
+//       title: "📋 Konfirmasi Export Nilai",
+//       html: `
+//         <p>Pastikan semua data berikut sudah benar sebelum dikirim:</p>
+//         <div style="max-height: 300px; overflow-y: auto; text-align:left">
+//           <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
+//             <thead>
+//               <tr style="background:#333">
+//                 <th>#</th>
+//                 <th>No Induk</th>
+//                 <th>Nama</th>
+//                 <th>Reading</th>
+//                 <th>Listening</th>
+//                 <th>Writing</th>
+//                 <th>Speaking</th>
+//               </tr>
+//             </thead>
+//             <tbody>${previewTable}</tbody>
+//           </table>
+//         </div>
+//       `,
+//       width: 750,
+//       showCancelButton: true,
+//       confirmButtonText: "✅ Export Sekarang",
+//       cancelButtonText: "Batal",
+//     });
+
+//     if (!isConfirmed) return;
+
+//     // Siapkan payload untuk dikirim
+//     const payload = {
+//       reading: sortedData.map((n) => n.reading ?? ""),
+//       listening: sortedData.map((n) => n.listening ?? ""),
+//       writing: sortedData.map((n) => n.writing ?? ""),
+//       speaking: sortedData.map((n) => n.speaking ?? ""),
+//     };
+
+//     Swal.fire({
+//       title: "Mengekspor data...",
+//       text: "Mengirim data ke Spreadsheet...",
+//       allowOutsideClick: false,
+//       didOpen: () => Swal.showLoading(),
+//     });
+
+//     const endpoint =
+//       "https://script.google.com/macros/s/AKfycbwcYl-6EE8I7Ms42LmE01A7iYz2bEidaEgKmIrNtqM8zu0ePbC-tFWy0nrCNVGuACj_SQ/exec";
+
+//     try {
+//       const res = await fetch(endpoint, {
+//         method: "POST",
+//         body: JSON.stringify(payload),
+//         headers: { "Content-Type": "application/json" },
+//         mode: "no-cors", // Gunakan jika tidak HTTPS (mode development)
+//       });
+
+//       // Karena mode no-cors tidak bisa akses res.text()
+//       Swal.fire(
+//         "✅ Sukses",
+//         "Data berhasil dikirim ke Spreadsheet.",
+//         "success"
+//       );
+//     } catch (err) {
+//       console.error("❌ Gagal kirim:", err);
+//       Swal.fire("❌ Gagal", "Tidak bisa kirim data ke spreadsheet", "error");
+//     }
+//   });
+
+function filterAndExportReadingByCabang(cabang) {
+  const ENDPOINT_KGM =
+    "https://script.google.com/macros/s/AKfycbz52S7w6731PG14zoXDlYoZ1y0yF9VKsnEqL7eZzfrW_7eyKp-64cgLGDfmoOscSRw_yg/exec";
+  const ENDPOINT_KLT =
+    "https://script.google.com/macros/s/AKfycbwcYl-6EE8I7Ms42LmE01A7iYz2bEidaEgKmIrNtqM8zu0ePbC-tFWy0nrCNVGuACj_SQ/exec";
+  const endpoint = cabang.toUpperCase() === "KGM" ? ENDPOINT_KGM : ENDPOINT_KLT;
+
+  // Merge cabang ke nilai
+  const merged = nilaiCache.map((nilai) => {
+    const murid = daftarMuridCache.find((m) => m.nama === nilai.nama);
+    return { ...nilai, cabang: murid?.cabang || "" };
+  });
+
+  const sorted = merged
+    .filter((n) =>
+      (n.cabang || "").toLowerCase().includes(cabang.toLowerCase())
+    )
+    .sort((a, b) =>
       String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
     );
 
-    // Validasi kelengkapan nilai
-    const incomplete = sortedData.filter(
-      (n) =>
-        (!n.reading && n.reading !== 0) ||
-        (!n.listening && n.listening !== 0) ||
-        (!n.writing && n.writing !== 0) ||
-        (!n.speaking && n.speaking !== 0)
-    );
+  const incomplete = sorted.filter(
+    (n) =>
+      !n.noInduk ||
+      !n.nama ||
+      (!n.reading && n.reading !== 0) ||
+      (!n.listening && n.listening !== 0) ||
+      (!n.writing && n.writing !== 0) ||
+      (!n.speaking && n.speaking !== 0)
+  );
 
-    if (incomplete.length > 0) {
-      return Swal.fire({
-        icon: "warning",
-        title: "❌ Data Belum Lengkap",
-        html: `Terdapat <b>${incomplete.length}</b> murid yang belum memiliki nilai lengkap.<br>Lengkapi terlebih dahulu sebelum mengekspor.`,
-      });
-    }
-
-    // Preview tabel nilai
-    const previewTable = sortedData
-      .map(
-        (n, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${n.noInduk || "-"}</td>
-          <td>${n.nama}</td>
-          <td>${n.reading}</td>
-          <td>${n.listening}</td>
-          <td>${n.writing}</td>
-          <td>${n.speaking}</td>
-        </tr>
-      `
-      )
-      .join("");
-
-    const { isConfirmed } = await Swal.fire({
-      title: "📋 Konfirmasi Export Nilai",
-      html: `
-        <p>Pastikan semua data berikut sudah benar sebelum dikirim:</p>
-        <div style="max-height: 300px; overflow-y: auto; text-align:left">
-          <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
-            <thead>
-              <tr style="background:#333">
-                <th>#</th>
-                <th>No Induk</th>
-                <th>Nama</th>
-                <th>Reading</th>
-                <th>Listening</th>
-                <th>Writing</th>
-                <th>Speaking</th>
-              </tr>
-            </thead>
-            <tbody>${previewTable}</tbody>
-          </table>
-        </div>
-      `,
-      width: 750,
-      showCancelButton: true,
-      confirmButtonText: "✅ Export Sekarang",
-      cancelButtonText: "Batal",
+  if (incomplete.length > 0) {
+    return Swal.fire({
+      icon: "warning",
+      title: `❌ Data ${cabang.toUpperCase()} Belum Lengkap`,
+      html: `Terdapat <b>${incomplete.length}</b> murid yang belum memiliki nilai lengkap.<br>Lengkapi dahulu sebelum mengekspor.`,
     });
+  }
 
-    if (!isConfirmed) return;
+  // Tampilkan preview
+  const previewTable = sorted
+    .map(
+      (n, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${n.noInduk}</td>
+        <td>${n.nama}</td>
+        <td>${n.reading}</td>
+        <td>${n.listening}</td>
+        <td>${n.writing}</td>
+        <td>${n.speaking}</td>
+      </tr>`
+    )
+    .join("");
 
-    // Siapkan payload untuk dikirim
+  Swal.fire({
+    title: `📋 Konfirmasi Export Nilai ${cabang.toUpperCase()}`,
+    html: `
+      <p>Berikut adalah data yang akan dikirim ke spreadsheet:</p>
+      <div style="max-height: 300px; overflow-y: auto; text-align:left">
+        <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
+          <thead>
+            <tr style="background:#333">
+              <th>#</th>
+              <th>No Induk</th>
+              <th>Nama</th>
+              <th>Reading</th>
+              <th>Listening</th>
+              <th>Writing</th>
+              <th>Speaking</th>
+            </tr>
+          </thead>
+          <tbody>${previewTable}</tbody>
+        </table>
+      </div>
+    `,
+    width: 750,
+    showCancelButton: true,
+    confirmButtonText: "✅ Kirim Sekarang",
+  }).then(async (result) => {
+    if (!result.isConfirmed) return;
+
     const payload = {
-      reading: sortedData.map((n) => n.reading ?? ""),
-      listening: sortedData.map((n) => n.listening ?? ""),
-      writing: sortedData.map((n) => n.writing ?? ""),
-      speaking: sortedData.map((n) => n.speaking ?? ""),
+      reading: sorted.map((n) => n.reading ?? ""),
+      listening: sorted.map((n) => n.listening ?? ""),
+      writing: sorted.map((n) => n.writing ?? ""),
+      speaking: sorted.map((n) => n.speaking ?? ""),
     };
 
     Swal.fire({
-      title: "Mengekspor data...",
-      text: "Mengirim data ke Spreadsheet...",
+      title: "Mengirim data...",
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
 
-    const endpoint =
-      "https://script.google.com/macros/s/AKfycbwcYl-6EE8I7Ms42LmE01A7iYz2bEidaEgKmIrNtqM8zu0ePbC-tFWy0nrCNVGuACj_SQ/exec";
-
     try {
-      const res = await fetch(endpoint, {
+      await fetch(endpoint, {
         method: "POST",
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
-        mode: "no-cors", // Gunakan jika tidak HTTPS (mode development)
+        mode: "no-cors",
       });
 
-      // Karena mode no-cors tidak bisa akses res.text()
       Swal.fire(
         "✅ Sukses",
-        "Data berhasil dikirim ke Spreadsheet.",
+        `Data ${cabang.toUpperCase()} berhasil dikirim ke Spreadsheet.`,
         "success"
       );
     } catch (err) {
       console.error("❌ Gagal kirim:", err);
-      Swal.fire("❌ Gagal", "Tidak bisa kirim data ke spreadsheet", "error");
+      Swal.fire(
+        "❌ Gagal",
+        `Gagal mengirim data ${cabang.toUpperCase()}.`,
+        "error"
+      );
     }
   });
+}
 
 // Render nilai murid
 function renderNilaiMuridPage(data, page = 1) {
@@ -1226,6 +1341,14 @@ function isiOpsiNilaiSelect() {
     });
   });
 }
+
+document.getElementById("exportReadingKGM").addEventListener("click", () => {
+  filterAndExportReadingByCabang("KGM");
+});
+
+document.getElementById("exportReadingKLT").addEventListener("click", () => {
+  filterAndExportReadingByCabang("KLT");
+});
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadCaches(); // ✅ Ambil semua data murid dan nilai sekali saja
