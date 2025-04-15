@@ -862,33 +862,104 @@ document
       );
     }
 
+    // Urutkan berdasarkan noInduk
+    const sortedData = [...nilaiCache].sort((a, b) =>
+      String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
+    );
+
+    // Validasi kelengkapan nilai
+    const incomplete = sortedData.filter(
+      (n) =>
+        (!n.reading && n.reading !== 0) ||
+        (!n.listening && n.listening !== 0) ||
+        (!n.writing && n.writing !== 0) ||
+        (!n.speaking && n.speaking !== 0)
+    );
+
+    if (incomplete.length > 0) {
+      return Swal.fire({
+        icon: "warning",
+        title: "❌ Data Belum Lengkap",
+        html: `Terdapat <b>${incomplete.length}</b> murid yang belum memiliki nilai lengkap.<br>Lengkapi terlebih dahulu sebelum mengekspor.`,
+      });
+    }
+
+    // Preview tabel nilai
+    const previewTable = sortedData
+      .map(
+        (n, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${n.noInduk || "-"}</td>
+          <td>${n.nama}</td>
+          <td>${n.reading}</td>
+          <td>${n.listening}</td>
+          <td>${n.writing}</td>
+          <td>${n.speaking}</td>
+        </tr>
+      `
+      )
+      .join("");
+
+    const { isConfirmed } = await Swal.fire({
+      title: "📋 Konfirmasi Export Nilai",
+      html: `
+        <p>Pastikan semua data berikut sudah benar sebelum dikirim:</p>
+        <div style="max-height: 300px; overflow-y: auto; text-align:left">
+          <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
+            <thead>
+              <tr style="background:#333">
+                <th>#</th>
+                <th>No Induk</th>
+                <th>Nama</th>
+                <th>Reading</th>
+                <th>Listening</th>
+                <th>Writing</th>
+                <th>Speaking</th>
+              </tr>
+            </thead>
+            <tbody>${previewTable}</tbody>
+          </table>
+        </div>
+      `,
+      width: 750,
+      showCancelButton: true,
+      confirmButtonText: "✅ Export Sekarang",
+      cancelButtonText: "Batal",
+    });
+
+    if (!isConfirmed) return;
+
+    // Siapkan payload untuk dikirim
+    const payload = {
+      reading: sortedData.map((n) => n.reading ?? ""),
+      listening: sortedData.map((n) => n.listening ?? ""),
+      writing: sortedData.map((n) => n.writing ?? ""),
+      speaking: sortedData.map((n) => n.speaking ?? ""),
+    };
+
     Swal.fire({
       title: "Mengekspor data...",
-      text: "Mohon tunggu, sedang mengirim nilai Reading ke BAVIC...",
+      text: "Mengirim data ke Spreadsheet...",
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
 
-    const readings = [...nilaiCache]
-      .sort((a, b) =>
-        String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
-      )
-      .map((n) => n.reading ?? "");
-
     const endpoint =
-      "https://script.google.com/macros/s/AKfycbx2GJAPS3ljc8H1vydX-H9DKgvbt0MxpEk2A3XMf8psR3xGJWdf4MTKqT99EgXYa6Z32g/exec";
+      "https://script.google.com/macros/s/AKfycbwcYl-6EE8I7Ms42LmE01A7iYz2bEidaEgKmIrNtqM8zu0ePbC-tFWy0nrCNVGuACj_SQ/exec";
 
     try {
       const res = await fetch(endpoint, {
         method: "POST",
-        body: JSON.stringify(readings),
+        body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
+        mode: "no-cors", // Gunakan jika tidak HTTPS (mode development)
       });
 
-      const text = await res.text();
+      // Karena mode no-cors tidak bisa akses res.text()
       Swal.fire(
         "✅ Sukses",
-        `Data Reading berhasil dikirim: ${text}`,
+        "Data berhasil dikirim ke Spreadsheet.",
         "success"
       );
     } catch (err) {
