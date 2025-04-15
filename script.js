@@ -876,7 +876,7 @@ document
       .map((n) => n.reading ?? "");
 
     const endpoint =
-      "https://script.google.com/macros/s/AKfycbw8UFq2NR4mECqBIATBSnEI4-aDgLHNX5LGtFtjBGkXjklQOy1L74zmngzQvud3ExcKKA/exec";
+      "https://script.google.com/macros/s/AKfycbx2GJAPS3ljc8H1vydX-H9DKgvbt0MxpEk2A3XMf8psR3xGJWdf4MTKqT99EgXYa6Z32g/exec";
 
     try {
       const res = await fetch(endpoint, {
