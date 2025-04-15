@@ -36,13 +36,16 @@
           <table class="table-content">
             <thead>
               <tr>
-                <th class="sticky-col">Nama</th>
+                <th class="sticky-col">Nomor Induk</th>
+                <th>Nama</th>
                 <th>Kelas</th>
                 <th>Level</th>
                 <th>Cabang</th>
                 <th>Aksi</th>
               </tr>
             </thead>
+            <tbody id="daftarMurid"></tbody>
+
             <tbody id="daftarMurid"></tbody>
           </table>
         </div>
@@ -60,15 +63,14 @@
         <button id="btnExportNilai" class="btn-simpan">
           ⬇️ Export Nilai ke Excel
         </button>
+        <button id="exportReadingToSheet">⬆️ Export Reading ke BAVIC</button>
 
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
+                <th>Nomor Induk</th>
                 <th class="sticky-col">Nama</th>
-                <th>Kelas</th>
-                <th>Level</th>
-                <th>Cabang</th>
                 <th>Reading</th>
                 <th>Listening</th>
                 <th>Writing</th>
@@ -208,6 +210,13 @@
       <div id="modalEditMurid" class="modal hidden">
         <div class="modal-content">
           <h3 class="h3-modal">Edit Data Murid</h3>
+          <input
+            readonly
+            type="text"
+            class="modal-text"
+            id="editNoInduk"
+            placeholder="Nomor Induk"
+          />
           <input
             type="text"
             class="modal-text"
