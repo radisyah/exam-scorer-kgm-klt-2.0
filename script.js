@@ -339,9 +339,6 @@ async function simpanNilaiTanpaDuplikat(siswaArray) {
   let berhasil = 0;
   let duplikat = [];
 
-  // Reset daftarMuridCache sebelum proses baru dimulai
-  daftarMuridCache = [];
-
   Swal.fire({
     title: "Menyimpan data...",
     html: `
@@ -356,25 +353,35 @@ async function simpanNilaiTanpaDuplikat(siswaArray) {
   });
 
   for (let i = 0; i < total; i++) {
-    const siswa = siswaArray[i];
+    const s = siswaArray[i];
 
-    // Pengecekan duplikat di Firestore
+    const siswa = {
+      noInduk: s.noInduk?.toString().trim() || "",
+      nama: s.nama?.toString().trim() || "",
+      reading: s.reading !== undefined ? parseInt(s.reading) : null,
+      listening: s.listening !== undefined ? parseInt(s.listening) : null,
+      writing: s.writing !== undefined ? parseInt(s.writing) : null,
+      speaking: s.speaking !== undefined ? parseInt(s.speaking) : null,
+      matematika: s.matematika !== undefined ? parseInt(s.matematika) : null,
+      tanggal: new Date().toISOString(),
+    };
+
+    if (!siswa.nama || !siswa.noInduk) {
+      continue; // skip baris tidak valid
+    }
+
     const querySnapshot = await getDocs(
       query(collection(db, "nilai"), where("nama", "==", siswa.nama))
     );
 
     if (!querySnapshot.empty) {
-      // Jika ada data yang sudah ada di Firestore, tandai sebagai duplikat
       duplikat.push(siswa.nama);
     } else {
-      // Jika tidak ada duplikat, simpan data ke Firestore
-      const docRef = await addDoc(collection(db, "nilai"), siswa);
-      // Tambahkan siswa ke cache
-      daftarMuridCache.push({ id: docRef.id, ...siswa });
+      await setDoc(doc(db, "nilai", siswa.nama.toLowerCase()), siswa);
       berhasil++;
     }
 
-    // Update progress bar
+    // Progress bar
     const percent = Math.floor(((i + 1) / total) * 100);
     document.getElementById("progressBar").style.width = `${percent}%`;
     document.getElementById("progressText").textContent = `${
@@ -382,7 +389,6 @@ async function simpanNilaiTanpaDuplikat(siswaArray) {
     } / ${total} diproses`;
   }
 
-  // Setelah selesai, tampilkan notifikasi
   Swal.fire({
     icon: duplikat.length ? "warning" : "success",
     title: "Selesai",
@@ -391,7 +397,6 @@ async function simpanNilaiTanpaDuplikat(siswaArray) {
     }`,
   });
 
-  // Reset input file setelah selesai
   document.getElementById("excelNilaiInput").value = "";
 }
 
