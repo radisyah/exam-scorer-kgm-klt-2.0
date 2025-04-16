@@ -1,0 +1,63 @@
+function doPost(e) {
+  const ss = SpreadsheetApp.openById("1MJf8Ir5Ttm701RS_4zOx1KGGWXa6QtE1lFgNmoVqf4E");
+  const sheet = ss.getSheetByName("Data Nilai Ujian Bahasa Inggris");
+
+  try {
+    const data = JSON.parse(e.postData.contents);
+
+    if (
+      !data ||
+      !Array.isArray(data.reading) ||
+      !Array.isArray(data.listening) ||
+      !Array.isArray(data.writing) ||
+      !Array.isArray(data.speaking) ||
+      !Array.isArray(data.noInduk) ||
+      !Array.isArray(data.nama)
+    ) {
+      return ContentService.createTextOutput("❌ Format data tidak valid")
+        .setMimeType(ContentService.MimeType.TEXT)
+        .setHeader("Access-Control-Allow-Origin", "*");
+    }
+
+
+    // Ambil semua nama dari kolom A (kolom 1) mulai dari baris 6
+    const startRow = 6;
+    const totalRows = sheet.getLastRow();
+    const namaSheet = sheet.getRange(startRow, 1, totalRows - startRow + 1, 1).getValues().flat();
+
+
+    // Loop semua data yang dikirim dari frontend
+    let jumlahTulis = 0;
+    for (let i = 0; i < data.nama.length; i++) {
+      const namaDariWeb = String(data.nama[i] || "").trim().toLowerCase();
+
+      const index = namaSheet.findIndex((nama) => {
+        return typeof nama === "string" && nama.trim().toLowerCase() === namaDariWeb;
+      });
+
+      if (index >= 0) {
+        const row = startRow + index;
+
+        // Tulis ke kolom L, O, R, U
+        if (data.reading[i] != null) sheet.getRange(row, 12).setValue(data.reading[i]);   // L
+        if (data.listening[i] != null) sheet.getRange(row, 15).setValue(data.listening[i]); // O
+        if (data.speaking[i] != null) sheet.getRange(row, 18).setValue(data.speaking[i]);   // R
+        if (data.writing[i] != null) sheet.getRange(row, 21).setValue(data.writing[i]);     // U
+
+        jumlahTulis++;
+      } else {
+        Logger.log("❌ Nama tidak ditemukan di spreadsheet: " + data.nama[i]);
+      }
+    }
+
+    return ContentService.createTextOutput(`✅ ${jumlahTulis} nilai berhasil dikirim.`)
+      .setMimeType(ContentService.MimeType.TEXT)
+      .setHeader("Access-Control-Allow-Origin", "*");
+
+  } catch (err) {
+    Logger.log("❌ ERROR:", err);
+    return ContentService.createTextOutput("❌ Gagal parsing atau menyimpan data")
+      .setMimeType(ContentService.MimeType.TEXT)
+      .setHeader("Access-Control-Allow-Origin", "*");
+  }
+}
