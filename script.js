@@ -900,7 +900,7 @@ function filterAndExportNilaiInggirsByCabang(cabang) {
   Swal.fire({
     title: `📋 Konfirmasi Export Nilai ${cabang.toUpperCase()}`,
     html: `
-            <p>Berikut adalah data yang akan dikirim ke spreadsheet (nilai kosong akan dilewati):</p>
+            <p>Berikut adalah data yang akan dikirim ke spreadsheet:</p>
             <div style="max-height: 300px; overflow-y: auto; text-align:left">
               <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
                 <thead>
