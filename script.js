@@ -12,13 +12,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAGpqDZoKxd6oTtVuXt2Cc8U3XCZV6S5_w",
-  authDomain: "mec-kgm-klt.firebaseapp.com",
-  projectId: "mec-kgm-klt",
-  storageBucket: "mec-kgm-klt.firebasestorage.app",
-  messagingSenderId: "1001961428291",
-  appId: "1:1001961428291:web:3049033421bc8cad124bf6",
-  measurementId: "G-ZXGS4GLEEJ",
+  apiKey: "AIzaSyAePHk2SUscllq5zjVz8nfDoi6OLDqX_40",
+  authDomain: "mec-kgm-klt-input-nilai-6c367.firebaseapp.com",
+  projectId: "mec-kgm-klt-input-nilai-6c367",
+  storageBucket: "mec-kgm-klt-input-nilai-6c367.firebasestorage.app",
+  messagingSenderId: "1075575468794",
+  appId: "1:1075575468794:web:0004896cf4e59a1aaacf43",
+  measurementId: "G-544XBNRY4L",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -844,11 +844,11 @@ document
     }
   });
 
-function filterAndExportReadingByCabang(cabang) {
+function filterAndExportNilaiInggirsByCabang(cabang) {
   const ENDPOINT_KGM =
-    "https://script.google.com/macros/s/AKfycbywIwFoz7XUzKvfPMRFYrSlBXKCMgb0AH_yEFoPjtLbAft8VhaGkHjxorE_XuVN3IaTmw/exec";
+    "https://script.google.com/macros/s/AKfycbz4g9sS7uhKfsnYHzAGtJbNardBkN4ik3l7uYZB5xr-3_1wUFW85Vd3I9_M5G5n25nZ/exec";
   const ENDPOINT_KLT =
-    "https://script.google.com/macros/s/AKfycbzgkNetCtix1Zsq-rb5LRhj4ygNpjvLWOmDhcwvGZqdHsI31QhweZKYTmcN_9nbAqXkfA/exec";
+    "https://script.google.com/macros/s/AKfycbzVBpMVgPMBDQNSTagaJhfShUll-gEB1KRtbj5dNAdYkXnLeQOkjDIr29FMPKEgYs6R/exec";
 
   const endpoint = cabang.toUpperCase() === "KGM" ? ENDPOINT_KGM : ENDPOINT_KLT;
 
@@ -873,7 +873,6 @@ function filterAndExportReadingByCabang(cabang) {
       String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
     );
 
-  // 🚫 Jika tidak ada data murid dari cabang tersebut
   if (sorted.length === 0) {
     return Swal.fire({
       icon: "info",
@@ -882,64 +881,43 @@ function filterAndExportReadingByCabang(cabang) {
     });
   }
 
-  // Cek kelengkapan data
-  const incomplete = sorted.filter(
-    (n) =>
-      !n.noInduk ||
-      !n.nama ||
-      (!n.reading && n.reading !== 0) ||
-      (!n.listening && n.listening !== 0) ||
-      (!n.writing && n.writing !== 0) ||
-      (!n.speaking && n.speaking !== 0)
-  );
-
-  if (incomplete.length > 0) {
-    return Swal.fire({
-      icon: "warning",
-      title: `❌ Data ${cabang.toUpperCase()} Belum Lengkap`,
-      html: `Terdapat <b>${
-        incomplete.length
-      }</b> murid dari cabang ${cabang.toUpperCase()} yang belum memiliki nilai lengkap.<br>Lengkapi terlebih dahulu sebelum ekspor.`,
-    });
-  }
-
-  // Tampilkan preview
+  // Preview tetap ditampilkan meskipun ada yang kosong
   const previewTable = sorted
     .map(
       (n, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${n.noInduk}</td>
-          <td>${n.nama}</td>
-          <td>${n.reading}</td>
-          <td>${n.listening}</td>
-          <td>${n.writing}</td>
-          <td>${n.speaking}</td>
-        </tr>`
+            <tr>
+              <td>${i + 1}</td>
+              <td>${n.noInduk || "-"}</td>
+              <td>${n.nama || "-"}</td>
+              <td>${n.reading ?? ""}</td>
+              <td>${n.listening ?? ""}</td>
+              <td>${n.writing ?? ""}</td>
+              <td>${n.speaking ?? ""}</td>
+            </tr>`
     )
     .join("");
 
   Swal.fire({
     title: `📋 Konfirmasi Export Nilai ${cabang.toUpperCase()}`,
     html: `
-        <p>Berikut adalah data yang akan dikirim ke spreadsheet:</p>
-        <div style="max-height: 300px; overflow-y: auto; text-align:left">
-          <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
-            <thead>
-              <tr style="background:#333; color:white">
-                <th>#</th>
-                <th>No Induk</th>
-                <th>Nama</th>
-                <th>Reading</th>
-                <th>Listening</th>
-                <th>Writing</th>
-                <th>Speaking</th>
-              </tr>
-            </thead>
-            <tbody>${previewTable}</tbody>
-          </table>
-        </div>
-      `,
+            <p>Berikut adalah data yang akan dikirim ke spreadsheet (nilai kosong akan dilewati):</p>
+            <div style="max-height: 300px; overflow-y: auto; text-align:left">
+              <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
+                <thead>
+                  <tr style="background:#333; color:white">
+                    <th>#</th>
+                    <th>No Induk</th>
+                    <th>Nama</th>
+                    <th>Reading</th>
+                    <th>Listening</th>
+                    <th>Writing</th>
+                    <th>Speaking</th>
+                  </tr>
+                </thead>
+                <tbody>${previewTable}</tbody>
+              </table>
+            </div>
+          `,
     width: 750,
     showCancelButton: true,
     confirmButtonText: "✅ Kirim Sekarang",
@@ -948,6 +926,7 @@ function filterAndExportReadingByCabang(cabang) {
 
     const payload = {
       noInduk: sorted.map((n) => n.noInduk ?? ""),
+      nama: sorted.map((n) => n.nama ?? ""),
       reading: sorted.map((n) => n.reading ?? ""),
       listening: sorted.map((n) => n.listening ?? ""),
       writing: sorted.map((n) => n.writing ?? ""),
@@ -979,6 +958,117 @@ function filterAndExportReadingByCabang(cabang) {
       Swal.fire(
         "❌ Gagal",
         `Terjadi kesalahan saat mengirim data ${cabang.toUpperCase()}.`,
+        "error"
+      );
+    }
+  });
+}
+
+function filterAndExportNilaiMatematikaByCabang(cabang) {
+  const ENDPOINT_KGM =
+    "https://script.google.com/macros/s/AKfycbz4n25ErU69HxXXxXDf78cJH8xGlue4qOF37a27ouu2jG2zRDsh2_M1jOfaI9Sial_F/exec";
+  const ENDPOINT_KLT =
+    "https://script.google.com/macros/s/AKfycbxlkoGQwDZM-1B0Rr_2XnVrIQpDLQPcI9VR7Ksk2Wq28Bk-9mOWTCJ043wB9B0Frt3H/exec";
+
+  const endpoint = cabang.toUpperCase() === "KGM" ? ENDPOINT_KGM : ENDPOINT_KLT;
+
+  // Gabungkan data nilai dengan data murid
+  const merged = nilaiCache.map((nilai) => {
+    const murid = daftarMuridCache.find(
+      (m) => m.nama.toLowerCase() === nilai.nama.toLowerCase()
+    );
+    return {
+      ...nilai,
+      cabang: murid?.cabang || "",
+      noInduk: murid?.noInduk || "",
+    };
+  });
+
+  // Filter berdasarkan cabang
+  const sorted = merged
+    .filter((n) =>
+      (n.cabang || "").toLowerCase().includes(cabang.toLowerCase())
+    )
+    .sort((a, b) =>
+      String(a.noInduk || "").localeCompare(String(b.noInduk || ""))
+    );
+
+  if (sorted.length === 0) {
+    return Swal.fire({
+      icon: "info",
+      title: `❌ Tidak Ada Data ${cabang.toUpperCase()}`,
+      text: `Tidak ditemukan murid dari cabang ${cabang.toUpperCase()} di daftar nilai.`,
+    });
+  }
+
+  // Tampilkan preview
+  const previewTable = sorted
+    .map(
+      (n, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${n.noInduk}</td>
+          <td>${n.nama}</td>
+          <td>${n.matematika ?? ""}</td>
+        </tr>`
+    )
+    .join("");
+
+  Swal.fire({
+    title: `📋 Konfirmasi Export Nilai Matematika ${cabang.toUpperCase()}`,
+    html: `
+        <p>Berikut adalah data yang akan dikirim ke spreadsheet:</p>
+        <div style="max-height: 300px; overflow-y: auto; text-align:left">
+          <table style="width:100%; font-size: 12px; border-collapse: collapse;" border="1" cellpadding="4">
+            <thead>
+              <tr style="background:#333; color:white">
+                <th>#</th>
+                <th>No Induk</th>
+                <th>Nama</th>
+                <th>Matematika</th>
+              </tr>
+            </thead>
+            <tbody>${previewTable}</tbody>
+          </table>
+        </div>
+      `,
+    width: 600,
+    showCancelButton: true,
+    confirmButtonText: "✅ Kirim Sekarang",
+  }).then(async (result) => {
+    if (!result.isConfirmed) return;
+
+    const payload = {
+      noInduk: sorted.map((n) => n.noInduk ?? ""),
+      nama: sorted.map((n) => n.nama ?? ""),
+      matematika: sorted.map((n) => n.matematika ?? ""),
+    };
+
+    Swal.fire({
+      title: "Mengirim data...",
+      text: `Sedang mengirim nilai matematika cabang ${cabang.toUpperCase()}...`,
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      await fetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+        mode: "no-cors",
+      });
+
+      Swal.fire(
+        "✅ Sukses",
+        `Data nilai Matematika ${cabang.toUpperCase()} berhasil dikirim ke spreadsheet.`,
+        "success"
+      );
+    } catch (err) {
+      console.error("❌ Gagal kirim:", err);
+      Swal.fire(
+        "❌ Gagal",
+        `Terjadi kesalahan saat mengirim data Matematika ${cabang.toUpperCase()}.`,
         "error"
       );
     }
@@ -1244,12 +1334,24 @@ function isiOpsiNilaiSelect() {
   });
 }
 
-document.getElementById("exportReadingKGM").addEventListener("click", () => {
-  filterAndExportReadingByCabang("KGM");
+document
+  .getElementById("exportNilaiInggrisKGM")
+  .addEventListener("click", () => {
+    filterAndExportNilaiInggirsByCabang("KGM");
+  });
+
+document
+  .getElementById("exportNilaiInggrisKLT")
+  .addEventListener("click", () => {
+    filterAndExportNilaiInggirsByCabang("KLT");
+  });
+
+document.getElementById("exportNilaiMatKGM").addEventListener("click", () => {
+  filterAndExportNilaiMatematikaByCabang("KGM");
 });
 
-document.getElementById("exportReadingKLT").addEventListener("click", () => {
-  filterAndExportReadingByCabang("KLT");
+document.getElementById("exportNilaiMatKLT").addEventListener("click", () => {
+  filterAndExportNilaiMatematikaByCabang("KLT");
 });
 
 window.addEventListener("DOMContentLoaded", async () => {
