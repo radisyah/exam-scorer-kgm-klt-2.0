@@ -148,14 +148,14 @@ td.sticky-col {
 }
 
 .btn-simpan {
-  background-color: #4caf50;
+  background-color: #3b933e;
   color: white;
   margin-right: 10px;
   margin-bottom: 10px;
 }
 
 .btn-simpan:hover {
-  background-color: #45a049;
+  background-color: #1f7823;
 }
 
 .btn-cancel {
