@@ -198,6 +198,18 @@
             <option value="95">95</option>
             <option value="100">100</option>
           </select>
+          <div style="margin-bottom: 1rem">
+            <label>
+              <input type="checkbox" id="toggleModeWriting" />
+              Gunakan input Writing dari soal (A/B/C/D)
+            </label>
+          </div>
+
+          <div class="form-writing hidden" id="writingSoalContainer">
+            <label>Writing (Isi A/B/C/D):</label>
+            <div class="soal-group" id="soalWritingGroup"></div>
+          </div>
+
           <div class="form-buttons">
             <button id="simpanNilaiBtn" class="btn-simpan">Simpan Nilai</button>
             <button id="batalNilaiBtn" class="btn-cancel">Cancel</button>
